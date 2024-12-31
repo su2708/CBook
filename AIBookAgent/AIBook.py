@@ -131,6 +131,7 @@ class SearchResult(BaseModel):
     user_query: str
     action: str
     search_keywords: str
+    author: str
 
 
 # 검색 Agent 설정 
@@ -169,6 +170,7 @@ class AIAgent:
             3. 도서 선택, 세부 정보, 리뷰, 활용과 관련된 일반적인 주제인지 판단하세요.
             4. 질의 유형이 정보 검색형인지, 도서 추천 의도가 있는지 확인하세요.
             5. 도서와 관련 없는 질문(예: \"책상 추천\")은 제외하세요.
+            6. 검색된 키워드 문자열의 마지막에 '책'은 붙이지 말아주세요.
 
             도서 관련 질의가 아닌 경우:
             - action을 "not_supported"로 설정
@@ -187,6 +189,9 @@ class AIAgent:
             - 전문 용어 완전성 유지
             - 개념 간 관계성 보존
             - 맥락 적합성 확보
+            
+            저자 추출 규칙:
+            - 도서의 저자에 대한 질문은 저자 이름만 골라내어 "author"로 저장해주세요.
 
             분석 대상 질의: {user_query}
 
@@ -205,6 +210,7 @@ class AIAgent:
         print(response)
         
         return response.model_dump()  # json 형식으로 변형형
+
 
 # 결과를 보여주는 함수 
 def display_results(results):
@@ -255,13 +261,15 @@ try:
         print("="*30)
         print("LLM을 통해 입력 쿼리를 분석 중입니다...")
         result = agent.analyze_query(user_input)
+        print(result)
         
+        # AI 답변 시작 
         st.empty()
         with st.chat_message("assistant"):
             st.empty()
             stream_handler = StreamHandler(st.empty())
         
-            # YouTube 검색
+            # 도서 검색 시작 
             if result['action'] == 'search_books':
                 print("="*30)
                 print("도서 검색 중입니다...")
