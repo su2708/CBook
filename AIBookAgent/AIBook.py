@@ -70,7 +70,7 @@ def search_books(query: str, k: int = 10):
     
     Args:
         query (str): 검색어
-        k (int): 반환할 결과 수 (기본값 3)
+        k (int): 반환할 결과 수 (기본값 10)
     
     Returns:
         list: 검색 결과 (책 정보 리스트)
