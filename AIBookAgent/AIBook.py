@@ -217,15 +217,60 @@ def display_results(results):
     """
     검색 결과를 스트림릿으로 보여주기 
     """
-    st.write(results)
+    for result in results[:3]:
+        # 구획 나누기 
+        col1, col2 = st.columns(2)
         
+        st.markdown('---')
+        
+        # 왼쪽 구획 
+        with col1:
+            image = f"{result['image']}"
+            st.image(image)
+        
+        # 오른쪽 구획 
+        with col2:
+            # 제목 
+            st.markdown(f"##### [{result['title']}]({result['link']})")
+            
+            # 책 정보 
+            st.markdown(
+                f"""
+                <div>
+                    <p style="color: #cccccc;">
+                        Author: {result['author']}
+                    </p>
+                    <p style="color: #cccccc;">
+                        publisher: {result['publisher']}
+                    </p>
+                    <p style="color: #cccccc;">
+                        pubdate: {result['pubdate']}
+                    </p>
+                    <p style="color: #cccccc;">
+                        isbn: {result['isbn']}
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            
+            # 책 설명 
+            st.markdown(f"{result['description'][:100]}...")
 
 
 # 이전 대화 기록을 출력해주는 함수
 def print_messages():
     if "messages" in st.session_state and len(st.session_state["messages"]) > 0:
         for chat_message in st.session_state["messages"]:
-            st.chat_message(chat_message.role).write(chat_message.content)
+            # message type에 따라 다르게 출력
+            
+            # chat_message.content가 문자열인 경우 
+            if isinstance(chat_message.content, str):
+                st.chat_message(chat_message.role).write(chat_message.content)
+            
+            # chat_message.content가 도서 목록인 경우 
+            else:
+                display_results(chat_message.content)
 
 
 #text streaming
@@ -261,7 +306,6 @@ try:
         print("="*30)
         print("LLM을 통해 입력 쿼리를 분석 중입니다...")
         result = agent.analyze_query(user_input)
-        print(result)
         
         # AI 답변 시작 
         st.empty()
