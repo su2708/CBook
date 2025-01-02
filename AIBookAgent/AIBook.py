@@ -38,13 +38,11 @@ st.markdown(
 )
 
 
-# 환경 변수 로드 
+# 환경 변수 로드
 load_dotenv()
 
-# 임베딩 모델 초기화 
-embedding_model = OpenAIEmbeddings(
-    model=os.getenv("OPENAI_EMBEDDING_MODEL")
-)
+# 임베딩 모델 초기화
+embedding_model = OpenAIEmbeddings(model=os.getenv("OPENAI_EMBEDDING_MODEL"))
 
 # 환경 변수에서 OpenAI API 키를 불러오기
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -63,83 +61,81 @@ if not NAVER_CLIENT_SECRET:
 NAVER_BOOKS_URL = "https://openapi.naver.com/v1/search/book.json?"
 
 
-# 도서 검색 
+# 도서 검색
 def search_books(query: str, k: int = 10):
     """
     네이버 도서 검색 API를 사용하여 도서를 검색합니다.
-    
+
     Args:
         query (str): 검색어
         k (int): 반환할 결과 수 (기본값 10)
-    
+
     Returns:
         list: 검색 결과 (책 정보 리스트)
     """
     search_results = []
-    
+
     while True:
         query = query.strip()
 
         if not query:
             continue
-            
-        if query.lower() in ['q', 'quit']:
+
+        if query.lower() in ["q", "quit"]:
             print("\n👋 검색을 종료합니다.")
             break
 
         try:
             print(f"\n'{query}' 검색을 시작합니다...")
-            
+
             # HTTP 요청 헤더 설정
             headers = {
                 "X-Naver-Client-Id": NAVER_CLIENT_ID,
-                "X-Naver-Client-Secret": NAVER_CLIENT_SECRET
+                "X-Naver-Client-Secret": NAVER_CLIENT_SECRET,
             }
-            
+
             # 요청 파라미터 설정
-            params = {
-                "query": query,
-                "display": k
-            }
-            
+            params = {"query": query, "display": k}
+
             # API 요청 보내기
             response = requests.get(NAVER_BOOKS_URL, headers=headers, params=params)
             response.raise_for_status()  # 요청 에러 확인
-            
+
             data = response.json()
             items = data.get("items", [])
-            
+
             search_results = search_results + items
             print(f"\n✨ 검색 완료! {len(search_results)}개의 결과를 찾았습니다.\n")
-            
+
             # 종료
             break
-        
+
         except Exception as e:
             print(f"\n❌ 검색 중 오류가 발생했습니다: {str(e)}")
-    
+
     return search_results
 
 
-# 검색 결과 자료형 설정 
+# 검색 결과 자료형 설정
 class SearchResult(BaseModel):
     """
     사용자 질문: str
     액션: str
     검색 키워드: str
     """
+
     user_query: str
     action: str
     search_keywords: str
     author: str
 
 
-# 검색 Agent 설정 
+# 검색 Agent 설정
 class AIAgent:
     def __init__(self, openai_api_key, llm_model="gpt-4o"):
         self.openai_api_key = openai_api_key
         self.llm_model = llm_model
-    
+
     def analyze_query(self, user_query):
         """
         LLM을 사용하여 유저 쿼리를 분석하고 그 결과를 반환.
@@ -149,18 +145,15 @@ class AIAgent:
             temperature=0.1,
             api_key=self.openai_api_key,
         )
-        
-        self.output_parser = PydanticOutputParser(
-            pydantic_object=SearchResult
-        )
-        
+
+        self.output_parser = PydanticOutputParser(pydantic_object=SearchResult)
+
         self.prompt = PromptTemplate(
             input_variables=["user_query"],
             partial_variables={
                 "format_instructions": self.output_parser.get_format_instructions()
             },
-            template=
-            """
+            template="""
             당신은 도서 관련 정보를 제공하는 도우미입니다.
             먼저 입력된 질의가 도서 관련 내용인지 확인하세요.
 
@@ -201,39 +194,40 @@ class AIAgent:
 
         # 실행 체인 생성 - 프롬프트 처리부터 결과 파싱까지의 전체 흐름
         self.chain = RunnableSequence(
-            first= {"user_query": RunnablePassthrough()} | self.prompt,  # 먼저 프롬프트 처리
+            first={"user_query": RunnablePassthrough()}
+            | self.prompt,  # 먼저 프롬프트 처리
             middle=[llm],  # 그 다음 LLM으로 처리
             last=self.output_parser,  # 마지막으로 결과 파싱
         )
-        
+
         response = self.chain.invoke(user_query)  # 질문 분석
         print(response)
-        
+
         return response.model_dump()  # json 형식으로 변형형
 
 
-# 결과를 보여주는 함수 
+# 결과를 보여주는 함수
 def display_results(results):
     """
-    검색 결과를 스트림릿으로 보여주기 
+    검색 결과를 스트림릿으로 보여주기
     """
     for result in results[:3]:
-        # 구획 나누기 
+        # 구획 나누기
         col1, col2 = st.columns(2)
-        
-        st.markdown('---')
-        
-        # 왼쪽 구획 
+
+        st.markdown("---")
+
+        # 왼쪽 구획
         with col1:
             image = f"{result['image']}"
             st.image(image)
-        
-        # 오른쪽 구획 
+
+        # 오른쪽 구획
         with col2:
-            # 제목 
+            # 제목
             st.markdown(f"##### [{result['title']}]({result['link']})")
-            
-            # 책 정보 
+
+            # 책 정보
             st.markdown(
                 f"""
                 <div>
@@ -251,10 +245,10 @@ def display_results(results):
                     </p>
                 </div>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
-            
-            # 책 설명 
+
+            # 책 설명
             st.markdown(f"{result['description'][:100]}...")
 
 
@@ -263,22 +257,22 @@ def print_messages():
     if "messages" in st.session_state and len(st.session_state["messages"]) > 0:
         for chat_message in st.session_state["messages"]:
             # message type에 따라 다르게 출력
-            
-            # chat_message.content가 문자열인 경우 
+
+            # chat_message.content가 문자열인 경우
             if isinstance(chat_message.content, str):
                 st.chat_message(chat_message.role).write(chat_message.content)
-            
-            # chat_message.content가 도서 목록인 경우 
+
+            # chat_message.content가 도서 목록인 경우
             else:
                 display_results(chat_message.content)
 
 
-#text streaming
+# text streaming
 class StreamHandler(BaseCallbackHandler):
-    def __init__ (self, container, initial_text=""):
+    def __init__(self, container, initial_text=""):
         self.container = container
         self.text = initial_text
-    
+
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         self.text += token
         self.container.markdown(self.text)
@@ -293,38 +287,40 @@ if "messages" not in st.session_state:
 # Agent 초기화
 agent = AIAgent(openai_api_key)
 
-try: 
+try:
     # 대화 기록 출력
     print_messages()
-    
-    # 사용자의 질문 받기 
+
+    # 사용자의 질문 받기
     if user_input := st.chat_input("궁금한 것을 입력하세요."):
         st.chat_message("user").write(user_input)
-        st.session_state["messages"].append(ChatMessage(role="user", content=user_input))
-        
+        st.session_state["messages"].append(
+            ChatMessage(role="user", content=user_input)
+        )
+
         # 쿼리 분석
-        print("="*30)
+        print("=" * 30)
         print("LLM을 통해 입력 쿼리를 분석 중입니다...")
         result = agent.analyze_query(user_input)
-        
-        # AI 답변 시작 
+
+        # AI 답변 시작
         st.empty()
         with st.chat_message("assistant"):
             st.empty()
             stream_handler = StreamHandler(st.empty())
-        
-            # 도서 검색 시작 
-            if result['action'] == 'search_books':
-                print("="*30)
+
+            # 도서 검색 시작
+            if result["action"] == "search_books":
+                print("=" * 30)
                 print("도서 검색 중입니다...")
-                search_results = search_books(result['search_keywords'])
+                search_results = search_books(result["search_keywords"])
                 print("검색을 완료했습니다.")
 
                 # 검색 결과 표시
-                if search_results:                       
+                if search_results:
                     st.write("도서 검색 결과입니다.")
                     display_results(search_results)
-                    
+
                     st.session_state["messages"].append(
                         ChatMessage(role="assistant", content=search_results)
                     )
@@ -334,7 +330,7 @@ try:
                     st.session_state["messages"].append(
                         ChatMessage(role="assistant", content=response)
                     )
-            
+
             else:
                 response = "도서와 관련된 질문만 받을 수 있습니다."
                 st.write(f"{response}")
