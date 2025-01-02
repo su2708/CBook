@@ -32,11 +32,13 @@ def signup(request):
 def login(request):
     username = request.POST.get('username')
     password = request.POST.get('password')
-    
 
     # 사용자 인증
     user = authenticate(request, username=username, password=password)
     
+    user.last_login = dt.today()
+    user.save()
+
     if user is not None:
         # JWT 토큰 생성
         refresh = RefreshToken.for_user(user)
