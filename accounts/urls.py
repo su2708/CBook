@@ -10,6 +10,7 @@ app_name = 'accounts'
 
 urlpatterns = [
     path('', views.signup, name='signup'),
+    path('<int:user_id>/', views.profile, name='profile'),
     path('logout/', views.logout, name='logout'),
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
