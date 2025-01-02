@@ -24,3 +24,18 @@ def signup(request):
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(['POST'])
+def logout(request):
+    try:
+        refresh_token = request.POST.get('refresh_token')
+        if not refresh_token:
+            return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # RefreshToken 객체 생성 및 refresh_token의 유효성 검사 
+        token = RefreshToken(refresh_token)
+        token.blacklist()  # 블랙리스트에 추가 
+        
+        return Response({"success": "Logged out"}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
