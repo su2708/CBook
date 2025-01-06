@@ -78,6 +78,10 @@
 > [와이어 프레임](https://www.tldraw.com/r/7xdSslg_ZKOyViOdPXqUK?d=v400.0.2048.1145.Hct-xuf-i-lvOJvWwQ6MY)
 
 ---
+### 화면 시안
+> [화면 시안](https://www.figma.com/board/BI45LxiH9gPlGaDtZht632/CBook?node-id=0-1&t=fOSvmfRIMEsJ6Mk6-1)
+
+---
 ### ERD (Entity-Relationship Diagram)
 
 - ERD Diagram
