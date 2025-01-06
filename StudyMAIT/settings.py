@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     
     # Local
     "accounts",
-    "testplans"
+    "testplans",
+    "progress",
 ]
 
 MIDDLEWARE = [
