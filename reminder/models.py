@@ -38,3 +38,4 @@ class ReminderTemplate(models.Model):
         choices=MessageStyle.choices
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
