@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "accounts",
     "testplans",
     "progress",
+    "chatrooms",
 ]
 
 MIDDLEWARE = [
