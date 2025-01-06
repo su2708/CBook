@@ -23,4 +23,5 @@ from django.conf.urls.static import static
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/accounts/", include("accounts.urls")),  # 계정 관련 기능 
+    path("api/v1/testplans/", include("testplans.urls")),  # 시험 계획 관련 기능 
 ]
