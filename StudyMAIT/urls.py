@@ -24,5 +24,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/accounts/", include("accounts.urls")),  # 계정 관련 기능 
     path("api/v1/testplans/", include("testplans.urls")),  # 시험 계획 관련 기능 
-    path("api/v1/progress/", include("progress.urls")),  # 진행도 관련 기능 
+    path("api/v1/progress/", include("progress.urls")),  # 진행도 관련 기능
+    path('api/v1/reminder/', include('reminder.urls')), # 리마인더 기능능 
 ]
