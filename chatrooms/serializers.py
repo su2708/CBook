@@ -12,4 +12,3 @@ class ChatMsgSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatMessage
         fields = '__all__'
-        read_only_fields = ('chat_id')

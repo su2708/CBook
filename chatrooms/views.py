@@ -24,33 +24,57 @@ class ChatMsgListView(APIView):
         """
         try:
             messages = ChatMessage.objects.filter(chat_id=chat_id).order_by("sent_at")
+            
+            if not messages.exists():
+                return Response({
+                    "message": "아직 대화가 시작되지 않았습니다."
+                }, status=status.HTTP_204_NO_CONTENT)
+            
             serializer = ChatMsgSerializer(messages, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except ChatMessage.DoesNotExist:
-            return Response({
-                "message": "아직 대화가 시작되지 않았습니다."
-            }, status=status.HTTP_204_NO_CONTENT)
+        
         except Exception as e:
             return Response({
-                "error": {e}
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def post(self, request, chat_id):
         """
         새로운 채팅 메시지를 생성 
         """
-        data = request.data
-        print(data)
-        data['chat_id'] = chat_id  # 요청 데이터에 chat_id 추가 
-        response = chatbot(data["user_msg"])
-        serializer = ChatMsgSerializer(data=data)
-        
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
+        try:
+            # 필요한 데이터 추출 
+            user_msg = request.data.get("user_msg")
+            if not user_msg:
+                return Response({
+                    "message": "'user_msg'는 필수 입력 사항입니다."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # User의 ChatMessage 모델 객체 생성
+            new_msg = ChatMessage.objects.create(
+                chat_id_id = chat_id,
+                message_content = {"content": user_msg},
+                sent_by = 'user'
+            )
+            
+            # AI 응답 처리 및 저장 
+            ai_response = chatbot(user_msg)["content"]
+            ChatMessage.objects.create(
+                chat_id_id = chat_id,
+                message_content = {"content": ai_response},
+                sent_by = "ai"
+            )
+            
             return Response({
-                "message": "메시지가 전송되었습니다.",
-                "data": {serializer.data}
+                "message": "메시지가 성공적으로 생성되었습니다.",
+                "user_msg": user_msg,
+                "ai_response": {"content": ai_response}
             }, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # 채팅방에 대한 class
