@@ -36,10 +36,10 @@ def login(request):
     # 사용자 인증
     user = authenticate(request, username=username, password=password)
     
-    user.last_login = dt.today()
-    user.save()
-
     if user is not None:
+        user.last_login = dt.today()
+        user.save()
+        
         # JWT 토큰 생성
         refresh = RefreshToken.for_user(user)
         return JsonResponse({
