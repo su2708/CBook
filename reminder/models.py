@@ -17,7 +17,8 @@ class ReminderSettings(models.Model):
     test_plan = models.OneToOneField(
         'testplans.TestPlan',
         on_delete=models.CASCADE,
-        related_name='reminder_settings'
+        related_name='reminder_settings',
+        to_field='plan_id'
     )
     study_start_hour = models.IntegerField(
         '학습 시작 시간',

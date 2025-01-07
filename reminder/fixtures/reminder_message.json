@@ -1,6 +1,6 @@
 [
     {
-        "model": "reminders.remindermessage",
+        "model": "reminder.remindermessage",
         "pk": 1,
         "fields": {
             "message": "오늘도 열심히 공부해보아요! 힘내세요 ❤️",
@@ -8,7 +8,7 @@
         }
     },
     {
-        "model": "reminders.remindermessage",
+        "model": "reminder.remindermessage",
         "pk": 2,
         "fields": {
             "message": "지금 공부 안하면 시험에서 후회합니다. 당장 시작하세요!",
@@ -16,7 +16,7 @@
         }
     },
     {
-        "model": "reminders.remindermessage",
+        "model": "reminder.remindermessage",
         "pk": 3,
         "fields": {
             "message": "설정하신 학습 시간이 되었습니다. 학습을 시작하시기 바랍니다.",
@@ -24,7 +24,7 @@
         }
     },
     {
-        "model": "reminders.remindermessage",
+        "model": "reminder.remindermessage",
         "pk": 4,
         "fields": {
             "message": "공부할 시간이에요! 🎮 게임은 잠시 끄고 공부를 시작해볼까요?",

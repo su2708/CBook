@@ -27,7 +27,7 @@ def get_reminder_messages(request):
 def reminder_settings(request, plan_id):
     """알림 설정 조회 및 생성"""
     try:
-        test_plan = TestPlan.objects.get(id=plan_id)
+        test_plan = TestPlan.objects.get(plan_id=plan_id)
     except TestPlan.DoesNotExist:
         return Response({"detail": "시험 계획을 찾을 수 없습니다."}, 
                        status=status.HTTP_404_NOT_FOUND)
@@ -58,7 +58,7 @@ def reminder_settings(request, plan_id):
 def update_reminder_settings(request, plan_id):
     """알림 설정 수정"""
     try:
-        settings = ReminderSettings.objects.get(test_plan_id=plan_id)
+        settings = ReminderSettings.objects.get(test_plan__plan_id=plan_id)
     except ReminderSettings.DoesNotExist:
         return Response({"detail": "알림 설정을 찾을 수 없습니다."}, 
                        status=status.HTTP_404_NOT_FOUND)
