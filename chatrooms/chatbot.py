@@ -1,4 +1,5 @@
 import os
+from typing import List
 import requests
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
@@ -7,6 +8,7 @@ from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import tool
 from langchain_core.runnables import RunnablePassthrough, RunnableSequence
+from langchain_core.messages import HumanMessage, AIMessage
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chains.llm import LLMChain
@@ -96,22 +98,30 @@ def search_books(query: str, k: int = 10):
 
 # tool setting: 일반적인 챗봇 기능 
 @tool
-def chat_normally(user_question: str):
+def chat_normally(past_messages, user_msg: str):
     """
     일반적인 챗봇 기능을 수행합니다.
 
     Args:
-        user_question (str): 검색어
+        past_messages (List): 과거 대화 기록 
+        user_msg (str): 검색어
 
     Returns:
-        chat_result.content (str): 챗봇 답변 
+        chat_result["content"]["text"] (str): 챗봇 답변 
     """
-    chat_llm = LLM
-    
-    memory = ConversationBufferWindowMemory(
-        k=3,
-        return_messages=True
-    )
+    # 과거 대화 내역을 JSON 형태로 정리 (최신 -> 예전 순으로 정렬)
+    chat_history = []
+    for msg in reversed(past_messages):  # 최신순으로 가져왔으니 순서 뒤집기 
+        if msg.sent_by == "user":
+            chat_history.append(
+                # HumanMessage(content=msg.message_content.get("content"))
+                ("user", msg.message_content.get("content"))
+            )
+        else:
+            chat_history.append(
+                # AIMessage(content=msg.message_content.get("content"))
+                ("ai", msg.message_content.get("content"))
+            )
     
     prompt = ChatPromptTemplate.from_messages([
         ("system", "당신은 유용한 AI 챗봇입니다."),
@@ -119,15 +129,14 @@ def chat_normally(user_question: str):
         ("user", "{question}"),
     ])
     
-    chain = LLMChain(
-        llm=chat_llm,
-        prompt=prompt,
-        memory=memory
-    )
+    chain = {
+        "history": RunnablePassthrough(),
+        "question": RunnablePassthrough()
+    } | prompt | LLM
 
-    chat_result = chain.invoke({"question": user_question})
+    chat_result = chain.invoke({"history": chat_history, "question": user_msg})
 
-    return chat_result
+    return chat_result["content"]["text"]
 
 # tools 설정
 tools = [
@@ -237,7 +246,9 @@ agent = AIAgent(llm=LLM)
 
 def chatbot(user_message):
     # 1. 사용자 질문 분석 
-    result = agent.analyze_query(user_message)
+    past_messages = user_message["past_messages"]
+    user_msg = user_message["user_msg"]
+    result = agent.analyze_query(user_msg)
     
     # 2. 분석 결과에 따른 챗봇 답변 시작 
     
@@ -260,7 +271,7 @@ def chatbot(user_message):
     
     # 2-2. 일반적인 챗봇
     else:
-        chat_result = chat_normally(user_message)
+        chat_result = chat_normally(past_messages, user_msg)
         response = {
             "message": "일반적인 답변입니다.",
             "content": chat_result

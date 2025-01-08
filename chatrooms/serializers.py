@@ -5,10 +5,11 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatRoom
         fields = '__all__'
-        read_only_fields = ('user_id',)
+        read_only_fields = ('created_at', 'updated_at')
 
 
 class ChatMsgSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatMessage
         fields = '__all__'
+        read_only_fields = ('sent_by', 'sent_at')
