@@ -161,9 +161,38 @@ class ChatMsgListView(APIView):
             # 질문과 응답을 chat_id에 저장하기 위한 ChatRoom instance 가져오기 
             chat_room = ChatRoom.objects.filter(user_id=user_id, chat_id=chat_id).first()
             
+            print(f"ai: {ai_response}")
+            print('='*60)
+            print(f"chat room: {chat_room.chat_name}")
+            
+            # 시험 계획 생성 part
+            if "시험 계획" in ai_response:
+                if chat_room.testplan is None:  # 새 시험 계획 생성 
+                    with transaction.atomic():  # ChatRoom과 TestPlan의 연결 관리 
+                        test_plan = TestPlan.objects.create(
+                            test_name=f"Plan for {chat_room.chat_name}"
+                        )
+                        print(f"test_plan {test_plan} is created!")
+                        chat_room.testplan = test_plan
+                        chat_room.save()
+                        
+                        return Response({
+                            "message": "시험 계획이 생성되었습니다.",
+                            "user_msg": user_msg,
+                            "ai_response": {"content": ai_response}
+                        }, status=status.HTTP_201_CREATED)
+                
+                else:
+                    return Response({
+                        "message": "이미 존재하는 시험 계획입니다.",
+                        "user_msg": user_msg,
+                        "ai_response": {"content": ai_response}
+                    }, status=status.HTTP_208_ALREADY_REPORTED)
+            
+            
             # user_msg 저장
             ChatMessage.objects.create(
-                chat_id = chat_room,
+                chat_id = chat_room.first(),
                 user_id = request.user,
                 message_content = user_msg,
                 sent_by = 'user'
@@ -171,34 +200,11 @@ class ChatMsgListView(APIView):
             
             # ai_response 저장 
             ChatMessage.objects.create(
-                chat_id = chat_room,
+                chat_id = chat_room.first(),
                 user_id = request.user,
                 message_content = ai_response,
                 sent_by = "ai"
             )
-            
-            # # 시험 계획 생성 part
-            # if "시험 계획" in ai_response:
-            #     if chat_room.testplan is None:  # 새 시험 계획 생성 
-            #         with transaction.atomic():  # ChatRoom과 TestPlan의 연결 관리 
-            #             test_plan = TestPlan.objects.create(
-            #                 plan_name=f"Plan for {chat_room.chat_name}"
-            #             )
-            #             chat_room.testplan = test_plan
-            #             chat_room.save()
-                        
-            #             return Response({
-            #                 "message": "시험 계획이 생성되었습니다.",
-            #                 "user_msg": user_msg,
-            #                 "ai_response": {"content": ai_response}
-            #             }, status=status.HTTP_201_CREATED)
-                
-            #     else:
-            #         return Response({
-            #             "message": "이미 존재하는 시험 계획입니다.",
-            #             "user_msg": user_msg,
-            #             "ai_response": {"content": ai_response}
-            #         }, status=status.HTTP_201_CREATED)
             
             return Response({
                 "message": "메시지가 성공적으로 생성되었습니다.",
