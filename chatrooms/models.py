@@ -18,7 +18,6 @@ class ChatRoom(models.Model):
     def __str__(self):
         return self.chat_name
 
-
 class ChatMessage(models.Model):
     message_id = models.AutoField(primary_key=True)
     chat_id = models.ForeignKey(

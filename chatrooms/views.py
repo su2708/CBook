@@ -17,6 +17,7 @@ from .serializers import ChatRoomSerializer, ChatMsgSerializer
 from testplans.models import TestPlan
 from .models import ChatRoom, ChatMessage
 from .chatbot import chatbot
+import json
 
 # 특정 사용자 인증에 대한 class 
 class IsOwner(BasePermission):
@@ -121,9 +122,26 @@ class ChatMsgListView(APIView):
             # 최신 대화 10개 가져오기
             past_messages = ChatMessage.objects.filter(chat_id=chat_id).order_by("-sent_at")[:10]
             
+            # 1-1. 과거 대화 내역을 JSON 형태로 정리 (최신 -> 예전 순으로 정렬)
+            chat_history = []
+            for msg in reversed(past_messages):  # 최신순으로 가져왔으니 순서 뒤집기 
+                if msg.sent_by == "user":
+                    chat_history.append(
+                        HumanMessage(content=msg.message_content)
+                    )
+                else:
+                    if isinstance(msg.message_content, list): # JSON인 경우 OPENAI 입력에 맞게 직렬화 
+                        chat_history.append(
+                            AIMessage(content=str(msg.message_content))
+                        )
+                    else:
+                        chat_history.append(
+                            AIMessage(content=msg.message_content)
+                        )
+            
             # 챗봇에게 과거 대화 내역과 새로운 메시지 보내기 
-            chatbot_input = {"past_messages": past_messages, "user_msg": user_msg}
-            ai_response = chatbot(chatbot_input)["content"]
+            chatbot_input = {"chat_history": chat_history, "user_msg": user_msg}
+            ai_response = chatbot(chatbot_input)
             
             # ChatRoom 가져오기 
             chat_room = ChatRoom.objects.get(chat_id=chat_id)
@@ -131,16 +149,16 @@ class ChatMsgListView(APIView):
             # user_msg 저장
             ChatMessage.objects.create(
                 chat_id = chat_room,
-                user_id = user_id,
-                message_content = {"content": user_msg},
+                user_id = request.user,
+                message_content = user_msg,
                 sent_by = 'user'
             )
             
             # ai_response 저장 
             ChatMessage.objects.create(
                 chat_id = chat_room,
-                user_id = user_id,
-                message_content = {"content": ai_response},
+                user_id = request.user,
+                message_content = ai_response,
                 sent_by = "ai"
             )
             

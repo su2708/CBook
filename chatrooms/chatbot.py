@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import Union, List, Dict
 import requests
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
@@ -41,15 +41,37 @@ LLM = ChatOpenAI(
 )
 
 
+# 검색 결과 자료형 설정
+class SearchResult(BaseModel):
+    """
+    사용자 질문: str
+    액션: str
+    검색 키워드: str
+    저자: str
+    """
+    user_query: str
+    action: str
+    search_keywords: str
+    author: str
+
+class ChatNormallyInput(BaseModel):
+    """
+    사용자 질문: str
+    과거 채팅 기록: str | List | Dict
+    """
+    user_msg: str
+    content: Union[str, List, Dict]
+
+
 # tool setting: 도서 검색
 @tool
-def search_books(query: str, k: int = 10):
+def search_books(query: str, k: int = 5):
     """
     네이버 도서 검색 API를 사용하여 도서를 검색합니다.
 
     Args:
         query (str): 검색어
-        k (int): 반환할 결과 수 (기본값 10)
+        k (int): 반환할 결과 수 (기본값 5)
 
     Returns:
         list: 검색 결과 (책 정보 리스트)
@@ -96,75 +118,14 @@ def search_books(query: str, k: int = 10):
 
     return search_results
 
-# tool setting: 일반적인 챗봇 기능 
-@tool
-def chat_normally(past_messages, user_msg: str):
-    """
-    일반적인 챗봇 기능을 수행합니다.
-
-    Args:
-        past_messages (List): 과거 대화 기록 
-        user_msg (str): 검색어
-
-    Returns:
-        chat_result["content"]["text"] (str): 챗봇 답변 
-    """
-    # 과거 대화 내역을 JSON 형태로 정리 (최신 -> 예전 순으로 정렬)
-    chat_history = []
-    for msg in reversed(past_messages):  # 최신순으로 가져왔으니 순서 뒤집기 
-        if msg.sent_by == "user":
-            chat_history.append(
-                # HumanMessage(content=msg.message_content.get("content"))
-                ("user", msg.message_content.get("content"))
-            )
-        else:
-            chat_history.append(
-                # AIMessage(content=msg.message_content.get("content"))
-                ("ai", msg.message_content.get("content"))
-            )
-    
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "당신은 유용한 AI 챗봇입니다."),
-        MessagesPlaceholder(variable_name="history"),  # 채팅 기록 집어넣기
-        ("user", "{question}"),
-    ])
-    
-    chain = {
-        "history": RunnablePassthrough(),
-        "question": RunnablePassthrough()
-    } | prompt | LLM
-
-    chat_result = chain.invoke({"history": chat_history, "question": user_msg})
-
-    return chat_result["content"]["text"]
-
 # tools 설정
 tools = [
     Tool(
         name="Search Books",
         func=search_books,
         description="질문에 맞는 책을 검색합니다."
-    ),
-    Tool(
-        name="Chat",
-        func=chat_normally,
-        description="일반적인 챗봇 기능을 수행합니다."
     )
 ]
-
-
-# 검색 결과 자료형 설정
-class SearchResult(BaseModel):
-    """
-    사용자 질문: str
-    액션: str
-    검색 키워드: str
-    """
-
-    user_query: str
-    action: str
-    search_keywords: str
-    author: str
 
 
 # 검색 Agent 설정
@@ -246,7 +207,7 @@ agent = AIAgent(llm=LLM)
 
 def chatbot(user_message):
     # 1. 사용자 질문 분석 
-    past_messages = user_message["past_messages"]
+    chat_history = user_message["chat_history"]
     user_msg = user_message["user_msg"]
     result = agent.analyze_query(user_msg)
     
@@ -257,26 +218,46 @@ def chatbot(user_message):
         search_results = search_books(result["search_keywords"])
         
         if search_results:
-            response = {
+            print({
                 "message": "도서 검색 결과입니다.",
                 "content": search_results
-            }
-            return response
+            })
+            return search_results
         else:
-            response = {
+            print({
                 "message": "검색 결과가 없습니다.",
-                "content": ""
-            }
-            return response
+                "content": search_results
+            })
+            return search_results
     
     # 2-2. 일반적인 챗봇
     else:
-        chat_result = chat_normally(past_messages, user_msg)
-        response = {
-            "message": "일반적인 답변입니다.",
-            "content": chat_result
-        }
-        return response
+        """
+        일반적인 챗봇 기능을 수행합니다.
+        """
+        output_parser = PydanticOutputParser(pydantic_object=ChatNormallyInput)
+        
+        template = [(
+            "system",
+            """
+            당신은 유용한 AI 챗봇입니다.
+            아래의 대화를 보고 마지막 user의 질문에 답하세요.
+            최종 답변은 하나의 문자열이어야 합니다.
+            """
+        )] + chat_history + [("user", "{question}")]
+        
+        prompt = ChatPromptTemplate(
+            messages=template,
+            partial_variables={"format_instructions": output_parser.get_format_instructions()}
+        )
+
+        chain = {"question": RunnablePassthrough()} | prompt | LLM
+        
+        try:
+            response = chain.invoke(user_msg).content 
+            return response
+        except Exception as e:
+            raise ValueError(f"Parsing Error: {e}")
 
 
 ### 동작 테스트 
