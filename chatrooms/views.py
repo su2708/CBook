@@ -170,7 +170,10 @@ class ChatMsgListView(APIView):
                 if chat_room.testplan is None:  # 새 시험 계획 생성 
                     with transaction.atomic():  # ChatRoom과 TestPlan의 연결 관리 
                         test_plan = TestPlan.objects.create(
-                            test_name=f"Plan for {chat_room.chat_name}"
+                            test_name=f"{chat_room.chat_name}",
+                            # test_date=아마 ai_response 안에 있을 것,
+                            # test_place=아마 ai_response 안에 있을 것,
+                            # test_plan=아마 ai_response 안에 있을 것,
                         )
                         print(f"test_plan {test_plan} is created!")
                         chat_room.testplan = test_plan

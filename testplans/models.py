@@ -18,8 +18,10 @@ class TestPlan(models.Model):
     test_name = models.CharField(max_length=50)
     test_date = models.CharField(max_length=50)
     test_place = models.CharField(max_length=200)
+    test_plan = models.JSONField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    on_progress = models.BooleanField(default=1)
     
     def __str__(self):
         return self.test_name
