@@ -89,6 +89,7 @@ pytz==2024.2
 pywin32==308
 PyYAML==6.0.2
 pyzmq @ file:///C:/b/abs_f3yte6j5yn/croot/pyzmq_1734711069724/work
+rank-bm25==0.2.2
 referencing==0.35.1
 regex==2024.11.6
 requests==2.32.3
