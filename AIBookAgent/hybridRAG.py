@@ -229,21 +229,21 @@ class AIBooksRAG:
 
 
 # AIBooksRAG 클래스 초기화
-rag = AIBooksRAG()
+# rag = AIBooksRAG()
 
-# 벡터스토어 생성
-# rag.create_vector_store()
+# # 벡터스토어 생성
+# # rag.create_vector_store()
 
-# 벡터스토어 로드
-rag.load_vector_store()
+# # 벡터스토어 로드
+# rag.load_vector_store()
 
-# BM25 초기화
-rag.initialize_bm25()
+# # BM25 초기화
+# rag.initialize_bm25()
 
-# 하이브리드 검색
-query = "과학탐구"
-results = rag.hybrid_search(query, k=5)
-print("\n=== Hybrid Search Results ===")
+# # 하이브리드 검색
+# query = "과학탐구"
+# results = rag.hybrid_search(query, k=5)
+# print("\n=== Hybrid Search Results ===")
 
-for doc_type, score in results:
-    print(f"Type: {doc_type}, Score: {score:.4f}")
+# for doc_type, score in results:
+#     print(f"Type: {doc_type}, Score: {score:.4f}")
