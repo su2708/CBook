@@ -195,7 +195,7 @@ class ChatMsgListView(APIView):
             
             # user_msg 저장
             ChatMessage.objects.create(
-                chat_id = chat_room.first(),
+                chat_id = chat_room,
                 user_id = request.user,
                 message_content = user_msg,
                 sent_by = 'user'
@@ -203,7 +203,7 @@ class ChatMsgListView(APIView):
             
             # ai_response 저장 
             ChatMessage.objects.create(
-                chat_id = chat_room.first(),
+                chat_id = chat_room,
                 user_id = request.user,
                 message_content = ai_response,
                 sent_by = "ai"
