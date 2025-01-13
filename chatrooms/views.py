@@ -142,15 +142,18 @@ class ChatMsgListView(APIView):
             for msg in reversed(past_messages):  # 최신순으로 가져왔으니 순서 뒤집기 
                 if msg.sent_by == "user":
                     chat_history.append(
+                        # ("human", msg.message_content)
                         HumanMessage(content=msg.message_content)
                     )
                 else:
                     if isinstance(msg.message_content, list): # JSON인 경우 OPENAI 입력에 맞게 직렬화 
                         chat_history.append(
+                            # ("ai", str(msg.message_content))
                             AIMessage(content=str(msg.message_content))
                         )
                     else:
                         chat_history.append(
+                            # ("ai", msg.message_content)
                             AIMessage(content=msg.message_content)
                         )
             

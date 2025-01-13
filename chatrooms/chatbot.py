@@ -1,7 +1,7 @@
 from langchain_core.runnables import RunnablePassthrough
 from langchain.agents import AgentExecutor, ConversationalAgent, create_tool_calling_agent
 from langchain_core.output_parsers import PydanticOutputParser
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains.llm import LLMChain
 from langchain_openai import ChatOpenAI
@@ -73,8 +73,7 @@ class AIAgent:
         """
         self.output_parser = PydanticOutputParser(pydantic_object=SearchResult)
         
-        self.template = [(
-            "system",
+        self.template = [SystemMessage(content=
             """
             당신은 유용한 AI 챗봇입니다.
             
@@ -134,7 +133,7 @@ class AIAgent:
                 "author": "",
                 "content": "",
             """
-        )] + chat_history + [("user", "{question}")]
+        )] + chat_history + [HumanMessage(content="{user_query}")]
         
         self.prompt = ChatPromptTemplate(
             messages=self.template,
@@ -191,8 +190,7 @@ def make_plans(query: str, chat_history):
     """
     output_parser = PydanticOutputParser(pydantic_object=SearchResult)
     
-    template = [(
-        "system",
+    template = [SystemMessage(content=
         """
         당신은 시험 계획을 세워주는 AI 챗봇입니다.
         과거의 대화 내역에서 사용자의 마지막 질문과 관련된 책의 정보가 있다면 그 책의 목차를 활용해 학습 계획을 만들어주세요.
@@ -219,7 +217,7 @@ def make_plans(query: str, chat_history):
         
         아래의 대화를 보고 시험 계획을 생성하세요. 
         """
-    )] + chat_history + [("user", "{question}")]
+    )] + chat_history + [HumanMessage(content="{question}")]
     
     prompt = ChatPromptTemplate(
         messages=template,
@@ -235,11 +233,15 @@ def make_plans(query: str, chat_history):
         raise ValueError(f"Parsing Error: {e}")
 
 # tool setting: 일반 대화
+def do_nothing(*args, **kwargs):  # 빈 함수 생성 
+    pass
+
 @tool
-def basic_chat(query: str, chat_history):
+def basic_chat(query: str, chat_history, on_tool_start=do_nothing):
     """
     과거 대화 내역을 바탕으로 일반적인 대화를 진행하는 함수 
     """
+    tool.on_
     output_parser = PydanticOutputParser(pydantic_object=SearchResult)
     
     template = [(
