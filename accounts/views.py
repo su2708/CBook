@@ -69,7 +69,7 @@ def logout(request):
 
 @api_view(['GET', 'PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
-def profile(request, user_id):
+def profile(request):
     user = request.user  # JWT 인증을 통해 얻은 현재 사용자
     
     if request.method == 'GET':

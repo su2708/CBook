@@ -2,7 +2,6 @@ from django.db import models, transaction
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.conf import settings
-from testplans.models import TestPlan
 
 # Create your models here.
 class ChatRoom(models.Model):
@@ -11,7 +10,11 @@ class ChatRoom(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chatrooms"
     )
     testplan = models.OneToOneField(
-        TestPlan, on_delete=models.SET_NULL, related_name="chatroom", null=True, blank=True
+        "testplans.TestPlan",
+        on_delete=models.SET_NULL,
+        related_name="linked_chatroom",
+        null=True,
+        blank=True
     )
     chat_name = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)

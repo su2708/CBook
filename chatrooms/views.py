@@ -156,10 +156,62 @@ class ChatMsgListView(APIView):
             
             # 챗봇에게 과거 대화 내역과 새로운 메시지 보내기 
             chatbot_input = {"chat_history": chat_history, "user_msg": user_msg}
-            ai_response = chatbot(chatbot_input)
+
+            # 테스트용으로 챗봇 출력이 이렇게 된다고 하자.
+            if "시험 계획을 만들어" in user_msg:
+                ai_response = """
+                    시험 계획:
+                        <시작>2025/03/11<분할>스파르타고등학교<분할>2025/01/04,1단원|2025/01/08,2단원|2025/01/13,3단원<끝>
+                    """
+                
+            else:
+                ai_response = chatbot(chatbot_input)
             
             # 질문과 응답을 chat_id에 저장하기 위한 ChatRoom instance 가져오기 
             chat_room = ChatRoom.objects.filter(user_id=user_id, chat_id=chat_id).first()
+            
+            print(f"ai: {ai_response}")
+            print('='*60)
+            print(f"chat room: {chat_room.chat_name}")
+            
+            # 시험 계획 생성 part
+            if "시험 계획" in ai_response:
+                if chat_room.testplan is None:  # 새 시험 계획 생성
+
+                    # 챗봇 출력을 해석하는 파트. 이를 해석한 다음 DB에 등록한다.
+                    temp = ai_response[ai_response.find("<시작>")+4 : ai_response.find("<끝>")].split("<분할>")  # 데이터 파싱
+                    test_date, test_place, detail_plan = temp[0], temp[1], list()
+                    for pp in temp[2].split('|'):
+                        p = pp.split(',')
+                        detail_plan.append({"target_date": p[0], "target": p[1]})
+
+                    # DB 원자성 보장.
+                    with transaction.atomic():
+                        test_plan = TestPlan.objects.create(
+                            chatroom = chat_room,
+                            user_id = request.user,
+                            test_name = chat_room.chat_name,
+                            test_date = test_date,
+                            test_place = test_place,
+                            test_plan = detail_plan,
+                        )
+                        print(f"test_plan {test_plan} is created!")
+                        chat_room.testplan = test_plan
+                        chat_room.save()
+
+                        return Response({
+                            "message": "시험 계획이 생성되었습니다.",
+                            "user_msg": user_msg,
+                            "ai_response": {"content": ai_response}
+                        }, status=status.HTTP_201_CREATED)
+                
+                else:
+                    return Response({
+                        "message": "이미 존재하는 시험 계획입니다.",
+                        "user_msg": user_msg,
+                        "ai_response": {"content": ai_response}
+                    }, status=status.HTTP_208_ALREADY_REPORTED)
+            
             
             # user_msg 저장
             ChatMessage.objects.create(
@@ -176,29 +228,6 @@ class ChatMsgListView(APIView):
                 message_content = ai_response,
                 sent_by = "ai"
             )
-            
-            # # 시험 계획 생성 part
-            # if "시험 계획" in ai_response:
-            #     if chat_room.testplan is None:  # 새 시험 계획 생성 
-            #         with transaction.atomic():  # ChatRoom과 TestPlan의 연결 관리 
-            #             test_plan = TestPlan.objects.create(
-            #                 plan_name=f"Plan for {chat_room.chat_name}"
-            #             )
-            #             chat_room.testplan = test_plan
-            #             chat_room.save()
-                        
-            #             return Response({
-            #                 "message": "시험 계획이 생성되었습니다.",
-            #                 "user_msg": user_msg,
-            #                 "ai_response": {"content": ai_response}
-            #             }, status=status.HTTP_201_CREATED)
-                
-            #     else:
-            #         return Response({
-            #             "message": "이미 존재하는 시험 계획입니다.",
-            #             "user_msg": user_msg,
-            #             "ai_response": {"content": ai_response}
-            #         }, status=status.HTTP_201_CREATED)
             
             return Response({
                 "message": "메시지가 성공적으로 생성되었습니다.",
