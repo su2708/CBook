@@ -76,12 +76,16 @@ class AIAgent:
         self.template = [SystemMessage(content=
             """
             당신은 유용한 AI 챗봇입니다.
+            당신은 질문이 도서 검색 관련 질문인지 판단하는 것이 최우선입니다.
+            다음으로 질문이 시험 계획 생성에 대한 것인지 판단하세요.
+            가장 마지막으로 질문이이 위 두 가지 항목에 해당되지 않는다면 일반 대화라고 판단하세요.
             
             주어진 대화 내역과 사용자의 마지막 질문을 기반으로, 질문이 다음 세 가지 카테고리 중 어디에 속하는지 판단하세요:
             
             1. **도서 검색 관련 질문**:
             - 질문에 도서 제목, 저자, 출판사, 출판 연도, 장르 등의 키워드가 포함되어 있는 경우
             - 질문의 의도가 도서 정보를 요구하거나 책 추천을 요청하는 경우
+            - 질문의 의도가 키워드에 대해 책 검색을 요청하는 경우 
             - 도서 선택, 세부 정보, 리뷰, 활용과 관련된 일반적인 주제인 경우 
 
             2. **시험 계획 생성 관련 질문**:
@@ -182,8 +186,16 @@ def search_books(query: str, k: int = 5):
         
         return books
 
-# tool setting: 시험 계획 생성 
-@tool
+# tools 설정
+tools = [
+    Tool(
+        name="Search Books",
+        func=search_books,
+        description="질문에 맞는 책을 검색합니다."
+    )
+]
+
+
 def make_plans(query: str, chat_history):
     """
     과거 대화 내역을 바탕으로 시험 계획을 생성하는 함수 
@@ -195,9 +207,7 @@ def make_plans(query: str, chat_history):
         당신은 시험 계획을 세워주는 AI 챗봇입니다.
         과거의 대화 내역에서 사용자의 마지막 질문과 관련된 책의 정보가 있다면 그 책의 목차를 활용해 학습 계획을 만들어주세요.
 
-        아래의 절차를 따라 시험 계획을 만들어주세요.
-        1. action, search_keywords, author는 빈 문자열로 설정
-        2. content에 작성한 계획을 문자열로 저장 
+        답변은 하나의 문자열로 나와야 합니다.
         
         작성 예시를 보고 형식에 맞게 계획을 작성하세요.
         - 작성 예시
@@ -232,16 +242,10 @@ def make_plans(query: str, chat_history):
     except Exception as e:
         raise ValueError(f"Parsing Error: {e}")
 
-# tool setting: 일반 대화
-def do_nothing(*args, **kwargs):  # 빈 함수 생성 
-    pass
-
-@tool
-def basic_chat(query: str, chat_history, on_tool_start=do_nothing):
+def basic_chat(query: str, chat_history):
     """
     과거 대화 내역을 바탕으로 일반적인 대화를 진행하는 함수 
     """
-    tool.on_
     output_parser = PydanticOutputParser(pydantic_object=SearchResult)
     
     template = [(
@@ -249,9 +253,7 @@ def basic_chat(query: str, chat_history, on_tool_start=do_nothing):
         """
         당신은 유용한 AI 챗봇입니다.
         
-        아래의 절차에 따라 답변을 만들어주세요.
-        1. action, search_keywords, author는 빈 문자열로 설정
-        2. content에 답변을 문자열로 저장 
+        답변은 하나의 문자열로 나와야 합니다.
         
         아래의 대화 내역을 참고해 사용자의 마지막 질문에 대한 답을 해주세요.
         """
@@ -265,26 +267,9 @@ def basic_chat(query: str, chat_history, on_tool_start=do_nothing):
     chain = {"question": RunnablePassthrough()} | prompt | LLM
     
     response = chain.invoke(query).content 
+    
     return response
 
-# tools 설정
-tools = [
-    Tool(
-        name="Search Books",
-        func=search_books,
-        description="질문에 맞는 책을 검색합니다."
-    ),
-    Tool(
-        name="Make Plans",
-        func=make_plans,
-        description="대화 내역을 바탕으로 계획을 생성합니다. "
-    ),
-    Tool(
-        name="Basic Chat",
-        func=basic_chat,
-        description="대화 내역을 참고해 일반적인 대화를 진행합니다."
-    )
-]
 
 
 ######################### 답변하는 부분 #########################
@@ -346,8 +331,10 @@ def chatbot(user_message):
                 "message": "답변이 생성되었습니다.",
                 "content": response
             })
+            return response
         else:
             print({
                 "message": "답변이 생성되지 않았습니다.",
                 "content": response
             })
+            return response
