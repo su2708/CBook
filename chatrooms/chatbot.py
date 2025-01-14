@@ -195,7 +195,6 @@ tools = [
     )
 ]
 
-
 def make_plans(query: str, chat_history):
     """
     과거 대화 내역을 바탕으로 시험 계획을 생성하는 함수 
@@ -212,16 +211,7 @@ def make_plans(query: str, chat_history):
         작성 예시를 보고 형식에 맞게 계획을 작성하세요.
         - 작성 예시
             시험 계획1:
-            <시험일>2025/03/11
-            <장소>스파르타고등학교
-            <계획>2025/01/04 ~ 2025/01/06,1단원|2025/01/08,2단원|2025/01/13,3단원
-            <끝>
-            
-            시험 계획1:
-            <시험일>2025/04/05
-            <장소>
-            <계획>2025/02/04~2025/02/06,1단원|2025/02/08,2단원|2025/02/13,3~4단원
-            <끝>
+            <시작>2025/03/11<분할>스파르타고등학교<분할>2025/01/06,1단원|2025/01/08,2단원|2025/01/13,3단원<끝>
 
         과거의 대화 내역에 책에 대한 정보가 없다면 일반적인 지식으로 학습 계획을 만드세요.
         
@@ -277,11 +267,11 @@ def basic_chat(query: str, chat_history):
 # Agent 초기화
 agent = AIAgent(llm=LLM)
 
-
 def chatbot(user_message):
     # 1. 사용자 질문 분석 
     chat_history = user_message["chat_history"]
     user_query = user_message["user_msg"]
+    print(user_query)
     result = agent.analyze_query(user_query, chat_history)
     print(result)
     result = json.loads(result)
@@ -297,13 +287,13 @@ def chatbot(user_message):
                 "message": "도서 검색 결과입니다.",
                 "content": search_results
             })
-            return search_results
+            return result["action"], search_results
         else:
             print({
                 "message": "검색 결과가 없습니다.",
                 "content": search_results
             })
-            return search_results
+            return result["action"], search_results
     
     # 2-2. 시험 계획 생성 
     elif result["action"] == "make_plans":
@@ -314,13 +304,13 @@ def chatbot(user_message):
                 "message": "생성된 학습 계획입니다.",
                 "content": plan
             })
-            return plan
+            return result["action"], plan
         else:
             print({
                 "message": "계획이 생성되지 않았습니다.",
                 "content": plan
             })
-            return plan
+            return result["action"], plan
     
     # 2-3. 일반적인 챗봇
     else:
@@ -331,10 +321,10 @@ def chatbot(user_message):
                 "message": "답변이 생성되었습니다.",
                 "content": response
             })
-            return response
+            return result["action"], response
         else:
             print({
                 "message": "답변이 생성되지 않았습니다.",
                 "content": response
             })
-            return response
+            return result["action"], response

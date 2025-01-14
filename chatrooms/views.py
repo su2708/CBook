@@ -161,24 +161,33 @@ class ChatMsgListView(APIView):
             chatbot_input = {"chat_history": chat_history, "user_msg": user_msg}
 
             # 테스트용으로 챗봇 출력이 이렇게 된다고 하자.
-            if "시험 계획을 만들어" in user_msg:
-                ai_response = """
-                    시험 계획:
-                        <시작>2025/03/11<분할>스파르타고등학교<분할>2025/01/04,1단원|2025/01/08,2단원|2025/01/13,3단원<끝>
-                    """
-                
-            else:
-                ai_response = chatbot(chatbot_input)
+            action, ai_response = chatbot(chatbot_input)
             
             # 질문과 응답을 chat_id에 저장하기 위한 ChatRoom instance 가져오기 
             chat_room = ChatRoom.objects.filter(user_id=user_id, chat_id=chat_id).first()
+            
+            # user_msg 저장
+            ChatMessage.objects.create(
+                chat_id = chat_room,
+                user_id = request.user,
+                message_content = user_msg,
+                sent_by = 'user'
+            )
+            
+            # ai_response 저장 
+            ChatMessage.objects.create(
+                chat_id = chat_room,
+                user_id = request.user,
+                message_content = ai_response,
+                sent_by = "ai"
+            )
             
             print(f"ai: {ai_response}")
             print('='*60)
             print(f"chat room: {chat_room.chat_name}")
             
             # 시험 계획 생성 part
-            if "시험 계획" in ai_response:
+            if action == "make_plans":
                 if chat_room.testplan is None:  # 새 시험 계획 생성
 
                     # 챗봇 출력을 해석하는 파트. 이를 해석한 다음 DB에 등록한다.
@@ -216,21 +225,6 @@ class ChatMsgListView(APIView):
                     }, status=status.HTTP_208_ALREADY_REPORTED)
             
             
-            # user_msg 저장
-            ChatMessage.objects.create(
-                chat_id = chat_room,
-                user_id = request.user,
-                message_content = user_msg,
-                sent_by = 'user'
-            )
-            
-            # ai_response 저장 
-            ChatMessage.objects.create(
-                chat_id = chat_room,
-                user_id = request.user,
-                message_content = ai_response,
-                sent_by = "ai"
-            )
             
             return Response({
                 "message": "메시지가 성공적으로 생성되었습니다.",
