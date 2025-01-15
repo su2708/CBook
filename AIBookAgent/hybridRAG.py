@@ -1,21 +1,22 @@
-import os
-import json
-import pickle
-from typing import List, Dict, Tuple
-from bs4 import BeautifulSoup
-from dotenv import load_dotenv
-from rank_bm25 import BM25Okapi
-from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings
 from langchain.schema import Document
+from typing import List, Dict, Tuple
+from rank_bm25 import BM25Okapi
+from dotenv import load_dotenv
+from bs4 import BeautifulSoup
+from pathlib import Path
+import pickle
+import json
+import os
 
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL")
-JSON_DIR = os.getenv("JSON_DIR")
-VECTOR_STORE_PATH = os.getenv("VECTOR_STORE_PATH")
-METADATA_PATH = os.getenv("METADATA_PATH")
+JSON_DIR = os.path.abspath("./AIBookAgent/books")
+VECTOR_STORE_PATH = os.path.abspath("./AIBookAgent/books_vectorstore")
+METADATA_PATH = os.path.abspath("./AIBookAgent/books_vectorstore/index.pkl")
 
 class AIBooksRAG:
     """
@@ -44,7 +45,11 @@ class AIBooksRAG:
         """HTML 형태의 목차 데이터를 파싱하여 계층적 구조로 반환"""
         soup = BeautifulSoup(toc_html, "html.parser")
         chapters = [b.get_text() for b in soup.find_all("b")]
-        items = [br.next_sibling.strip() for br in soup.find_all("br") if br.next_sibling]
+        items = [
+            br.next_sibling.strip()
+            for br in soup.find_all("br")
+            if br.next_sibling and isinstance(br.next_sibling, str)
+        ]
 
         structured_toc = []
         current_chapter = None
@@ -112,6 +117,10 @@ class AIBooksRAG:
     def load_json_files(self, directory: str) -> List[Dict]:
         """지정된 디렉토리에서 모든 JSON 파일을 읽어 책 정보 리스트 반환"""
         data = []
+        if os.path.exists(directory):
+            print(f"{directory}는 존재합니다.")
+        else:
+            print(f"{directory}는 존재하지 않습니다.")
         for filename in os.listdir(directory):
             if filename.endswith(".json"):
                 filepath = os.path.join(directory, filename)
@@ -139,6 +148,10 @@ class AIBooksRAG:
     def load_vector_store(self):
         """FAISS 벡터스토어 및 메타데이터 로드"""
         try:
+            # 경로를 Path 객체로 변환 
+            vector_store_path = Path(self.vector_store_path)
+            metadata_path = Path(self.metadata_path)
+            
             # 벡터스토어 로드 
             self.vector_store = FAISS.load_local(
                 self.vector_store_path,
@@ -151,6 +164,20 @@ class AIBooksRAG:
             with open(self.metadata_path, 'rb') as f:
                 self.metadata = pickle.load(f)
             print(f"✅ {self.metadata_path}에서 메타데이터를 로드했습니다.")
+        except RuntimeError as e:
+            # 벡터스토어 파일이 없어서 발생한 경우 
+            if "No such file or directory" in str(e):
+                print(f"⚠️ {vector_store_path}가 존재하지 않습니다. 벡터스토어를 생성합니다.")
+                self.create_vector_store()  # 벡터스토어 재생성 
+                self.load_vector_store()  # 재귀 호출로 로드 재시도
+            else:
+                # 다른 RuntimeError는 재전달 
+                raise
+        except FileNotFoundError as e:
+            # 메타데이터 파일이 없어서 발생한 경우 
+            print(f"⚠️ {metadata_path}가 존재하지 않습니다. 벡터스토어를 생성합니다.")
+            self.create_vector_store()  # 벡터스토어 재생성 
+            self.load_vector_store()  # 재귀 호출로 로드 재시도
         except Exception as e:
             raise Exception(f"❌ 로드 중 오류 발생: {str(e)}")
 
@@ -226,6 +253,7 @@ class AIBooksRAG:
         # 결과 정렬 및 반환 
         sorted_results = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)
         return [(doc_info[key], score) for key, score in sorted_results[:k]]
+
 
 
 # AIBooksRAG 클래스 초기화
