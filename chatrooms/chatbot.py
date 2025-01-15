@@ -4,7 +4,7 @@ from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains.llm import LLMChain
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.tools import tool
 from langchain.tools import Tool
 
@@ -29,7 +29,7 @@ import os
 load_dotenv()
 
 # 환경 변수에서 OpenAI API 키를 불러오기
-openai_api_key = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL")
 
 # 알라딘 Key 값 불러오기
@@ -43,7 +43,7 @@ METADATA_PATH = os.getenv("METADATA_PATH")
 LLM = ChatOpenAI(
     model="gpt-4o",
     temperature=0.1,
-    api_key=openai_api_key,
+    api_key=OPENAI_API_KEY,
 )
 
 
@@ -130,14 +130,16 @@ class AIAgent:
             3번 일반 대화 질문인 경우 다음 작업을 수행하세요.
             - action을 "basic_chat"으로 설정
             - search_keyword, author, content는 빈 문자열로 설정
-            
+
             3가지 답변 모두 절대로 마크다운 문법을 사용하지 않고 반드시 아래의 json 형식을 갖는 문자열로 작성하세요.
-                "action": "",
-                "search_keyword": "",
-                "author": "",
-                "content": "",
+            {
+                "action": "<action 값>",
+                "search_keywords": "<검색 키워드>",
+                "author": "<저자>",
+                "content": "<content>"
+            }   
             """
-        )] + chat_history + [HumanMessage(content="{user_query}")]
+        )] + chat_history + [("human", "{question}" )]
         
         self.prompt = ChatPromptTemplate(
             messages=self.template,
@@ -147,7 +149,7 @@ class AIAgent:
         self.chain = {"question": RunnablePassthrough()} | self.prompt | LLM
         
         try:
-            response = self.chain.invoke(user_query).content 
+            response = self.chain.invoke({"question": user_query }).content 
 
             return response
         except Exception as e:
@@ -201,7 +203,8 @@ def make_plans(query: str, chat_history):
     """
     output_parser = PydanticOutputParser(pydantic_object=SearchResult)
     
-    template = [SystemMessage(content=
+    template = [(
+        "system",
         """
         당신은 시험 계획을 세워주는 AI 챗봇입니다.
         과거의 대화 내역에서 사용자의 마지막 질문과 관련된 책의 정보가 있다면 그 책의 목차를 활용해 학습 계획을 만들어주세요.
@@ -217,7 +220,7 @@ def make_plans(query: str, chat_history):
         
         아래의 대화를 보고 시험 계획을 생성하세요. 
         """
-    )] + chat_history + [HumanMessage(content="{question}")]
+    )] + chat_history + [("human", "{question}" )]
     
     prompt = ChatPromptTemplate(
         messages=template,
@@ -227,7 +230,7 @@ def make_plans(query: str, chat_history):
     chain = {"question": RunnablePassthrough()} | prompt | LLM
     
     try:
-        response = chain.invoke(query).content 
+        response = chain.invoke({"question": query }).content 
         return response
     except Exception as e:
         raise ValueError(f"Parsing Error: {e}")
@@ -247,7 +250,7 @@ def basic_chat(query: str, chat_history):
         
         아래의 대화 내역을 참고해 사용자의 마지막 질문에 대한 답을 해주세요.
         """
-    )] + chat_history + [("user", "{question}")]
+    )] + chat_history + [("human", "{question}" )]
     
     prompt = ChatPromptTemplate(
         messages=template,
@@ -256,7 +259,7 @@ def basic_chat(query: str, chat_history):
 
     chain = {"question": RunnablePassthrough()} | prompt | LLM
     
-    response = chain.invoke(query).content 
+    response = chain.invoke({"question": query }).content 
     
     return response
 
@@ -275,12 +278,13 @@ def chatbot(user_message):
     result = agent.analyze_query(user_query, chat_history)
     print(result)
     result = json.loads(result)
+    print(result["search_keywords"])
     
     # 2. 분석 결과에 따른 챗봇 답변 시작 
     
     # 2-1. 책 검색
     if result["action"] == "search_books":
-        search_results = search_books(result["search_keyword"])
+        search_results = search_books(result["search_keywords"])
         
         if search_results:
             print({
