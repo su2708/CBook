@@ -214,14 +214,20 @@ class ChatMsgListView(APIView):
                         return Response({
                             "message": "시험 계획이 생성되었습니다.",
                             "user_msg": user_msg,
-                            "ai_response": {"content": ai_response}
+                            "ai_response": {
+                                "action": action,
+                                "content": ai_response
+                            }
                         }, status=status.HTTP_201_CREATED)
                 
                 else:
                     return Response({
                         "message": "이미 존재하는 시험 계획입니다.",
                         "user_msg": user_msg,
-                        "ai_response": {"content": ai_response}
+                        "ai_response": {
+                            "action": action,
+                            "content": ai_response
+                        }
                     }, status=status.HTTP_208_ALREADY_REPORTED)
             
             
@@ -229,7 +235,10 @@ class ChatMsgListView(APIView):
             return Response({
                 "message": "메시지가 성공적으로 생성되었습니다.",
                 "user_msg": user_msg,
-                "ai_response": {"content": ai_response}
+                "ai_response": {
+                    "action": action,
+                    "content": ai_response
+                }
             }, status=status.HTTP_201_CREATED)
         
         except ChatRoom.DoesNotExist:
