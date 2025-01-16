@@ -171,7 +171,8 @@ class ChatMsgListView(APIView):
                 chat_id = chat_room,
                 user_id = request.user,
                 message_content = user_msg,
-                sent_by = 'user'
+                sent_by = 'user', 
+                action = ""
             )
             
             # ai_response 저장 
@@ -179,56 +180,57 @@ class ChatMsgListView(APIView):
                 chat_id = chat_room,
                 user_id = request.user,
                 message_content = ai_response,
-                sent_by = "ai"
+                sent_by = "ai",
+                action = action
             )
             
             print(f"ai: {ai_response}")
             print('='*60)
             print(f"chat room: {chat_room.chat_name}")
             
-            # 시험 계획 생성 part
-            if action == "make_plans":
-                if chat_room.testplan is None:  # 새 시험 계획 생성
+            # # 시험 계획 생성 part
+            # if action == "make_plans":
+            #     if chat_room.testplan is None:  # 새 시험 계획 생성
 
-                    # 챗봇 출력을 해석하는 파트. 이를 해석한 다음 DB에 등록한다.
-                    temp = ai_response[ai_response.find("<시작>")+4 : ai_response.find("<끝>")].split("<분할>")  # 데이터 파싱
-                    test_date, test_place, detail_plan = temp[0], temp[1], list()
-                    for pp in temp[2].split('|'):
-                        p = pp.split(',')
-                        detail_plan.append({"target_date": p[0], "target": p[1]})
+            #         # 챗봇 출력을 해석하는 파트. 이를 해석한 다음 DB에 등록한다.
+            #         temp = ai_response[ai_response.find("<시작>")+4 : ai_response.find("<끝>")].split("<분할>")  # 데이터 파싱
+            #         test_date, test_place, detail_plan = temp[0], temp[1], list()
+            #         for pp in temp[2].split('|'):
+            #             p = pp.split(',')
+            #             detail_plan.append({"target_date": p[0], "target": p[1]})
 
-                    # DB 원자성 보장.
-                    with transaction.atomic():
-                        test_plan = TestPlan.objects.create(
-                            chatroom = chat_room,
-                            user_id = request.user,
-                            test_name = chat_room.chat_name,
-                            test_date = test_date,
-                            test_place = test_place,
-                            test_plan = detail_plan,
-                        )
-                        print(f"test_plan {test_plan} is created!")
-                        chat_room.testplan = test_plan
-                        chat_room.save()
+            #         # DB 원자성 보장.
+            #         with transaction.atomic():
+            #             test_plan = TestPlan.objects.create(
+            #                 chatroom = chat_room,
+            #                 user_id = request.user,
+            #                 test_name = chat_room.chat_name,
+            #                 test_date = test_date,
+            #                 test_place = test_place,
+            #                 test_plan = detail_plan,
+            #             )
+            #             print(f"test_plan {test_plan} is created!")
+            #             chat_room.testplan = test_plan
+            #             chat_room.save()
 
-                        return Response({
-                            "message": "시험 계획이 생성되었습니다.",
-                            "user_msg": user_msg,
-                            "ai_response": {
-                                "action": action,
-                                "content": ai_response
-                            }
-                        }, status=status.HTTP_201_CREATED)
+            #             return Response({
+            #                 "message": "시험 계획이 생성되었습니다.",
+            #                 "user_msg": user_msg,
+            #                 "ai_response": {
+            #                     "action": action,
+            #                     "content": ai_response
+            #                 }
+            #             }, status=status.HTTP_201_CREATED)
                 
-                else:
-                    return Response({
-                        "message": "이미 존재하는 시험 계획입니다.",
-                        "user_msg": user_msg,
-                        "ai_response": {
-                            "action": action,
-                            "content": ai_response
-                        }
-                    }, status=status.HTTP_208_ALREADY_REPORTED)
+            #     else:
+            #         return Response({
+            #             "message": "이미 존재하는 시험 계획입니다.",
+            #             "user_msg": user_msg,
+            #             "ai_response": {
+            #                 "action": action,
+            #                 "content": ai_response
+            #             }
+            #         }, status=status.HTTP_208_ALREADY_REPORTED)
             
             
             
