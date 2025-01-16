@@ -13,7 +13,7 @@ import os
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL")
+OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
 JSON_DIR = os.path.abspath("./AIBookAgent/books")
 VECTOR_STORE_PATH = os.path.abspath("./AIBookAgent/books_vectorstore")
 METADATA_PATH = os.path.abspath("./AIBookAgent/books_vectorstore/index.pkl")
