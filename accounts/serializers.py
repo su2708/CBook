@@ -27,12 +27,13 @@ class SignupSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
-class UserProfileSerializer(serializers.ModelSerializer):    
+class UserProfileSerializer(serializers.ModelSerializer):
     profile_image = serializers.SerializerMethodField()  # 커스텀 필드로 처리 
     
     class Meta:
         model = User
         fields = [
+            'id',
             'username',
             'email',
             'phone',

@@ -30,16 +30,16 @@ def signup(request):
 @authentication_classes([])      # 전역 인증 설정 무시
 @permission_classes([AllowAny])  # 전역 IsAuthenticated 설정 무시
 def login(request):
-    username = request.POST.get('username')
-    password = request.POST.get('password')
+    username = request.data.get('username')
+    password = request.data.get('password')
 
     # 사용자 인증
     user = authenticate(request, username=username, password=password)
     
-    user.last_login = dt.today()
-    user.save()
-
     if user is not None:
+        user.last_login = dt.today()
+        user.save()
+        
         # JWT 토큰 생성
         refresh = RefreshToken.for_user(user)
         return JsonResponse({
@@ -54,7 +54,7 @@ def login(request):
 @api_view(['POST'])
 def logout(request):
     try:
-        refresh_token = request.POST.get('refresh_token')
+        refresh_token = request.data.get('refresh_token')
         if not refresh_token:
             return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -69,7 +69,7 @@ def logout(request):
 
 @api_view(['GET', 'PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
-def profile(request, user_id):
+def profile(request):
     user = request.user  # JWT 인증을 통해 얻은 현재 사용자
     
     if request.method == 'GET':
