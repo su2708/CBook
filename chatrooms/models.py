@@ -2,7 +2,6 @@ from django.db import models, transaction
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.conf import settings
-from testplans.models import TestPlan
 
 # Create your models here.
 class ChatRoom(models.Model):
@@ -11,7 +10,11 @@ class ChatRoom(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chatrooms"
     )
     testplan = models.OneToOneField(
-        TestPlan, on_delete=models.SET_NULL, related_name="chatroom", null=True, blank=True
+        "testplans.TestPlan",
+        on_delete=models.SET_NULL,
+        related_name="linked_chatroom",
+        null=True,
+        blank=True
     )
     chat_name = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -39,6 +42,7 @@ class ChatMessage(models.Model):
     chat_id = models.ForeignKey(
         ChatRoom, on_delete=models.CASCADE, related_name="chatmessages"
     )
+    chatroom_id = models.IntegerField(null=True, blank=True)  # ChatRoom의 chat_id
     user_id = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chatmessages"
     )
@@ -46,6 +50,7 @@ class ChatMessage(models.Model):
     SENDER_CHOICES = [("user", "User"), ("ai", "AI")]  # 발신자를 user 또는 ai로 구분 
     sent_by = models.CharField(max_length=20, choices=SENDER_CHOICES)
     sent_at = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=50)
     
     def __str__(self):
         return f"[{self.sent_at}] {self.sent_by}: {self.message_content}"
