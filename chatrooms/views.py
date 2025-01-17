@@ -168,7 +168,8 @@ class ChatMsgListView(APIView):
             
             # user_msg 저장
             ChatMessage.objects.create(
-                chat_id = chat_room,
+                chat_id = chat_room,  # ChatRoom 객체 저장 
+                chatroom_id = chat_room.chat_id,  # ChatRoom의 chat_id를 저장 
                 user_id = request.user,
                 message_content = user_msg,
                 sent_by = 'user', 
