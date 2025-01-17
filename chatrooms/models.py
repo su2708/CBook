@@ -42,6 +42,7 @@ class ChatMessage(models.Model):
     chat_id = models.ForeignKey(
         ChatRoom, on_delete=models.CASCADE, related_name="chatmessages"
     )
+    chatroom_id = models.IntegerField(null=True, blank=True)  # ChatRoom의 chat_id
     user_id = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chatmessages"
     )
@@ -49,6 +50,7 @@ class ChatMessage(models.Model):
     SENDER_CHOICES = [("user", "User"), ("ai", "AI")]  # 발신자를 user 또는 ai로 구분 
     sent_by = models.CharField(max_length=20, choices=SENDER_CHOICES)
     sent_at = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=50)
     
     def __str__(self):
         return f"[{self.sent_at}] {self.sent_by}: {self.message_content}"

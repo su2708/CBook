@@ -101,10 +101,10 @@ class ChatMsgListView(APIView):
         특정 채팅방(chat_id)에 해당하는 모든 메시지를 반환 
         """
         # request params에서 chat_id 추출. 기본 값은 1
-        chat_id = request.GET.get("chat_id", 1)
+        chatroom_id = request.GET.get("chatroom_id", 1)
         
         try:
-            messages = ChatMessage.objects.filter(user_id=user_id, chat_id=chat_id).order_by("sent_at")
+            messages = ChatMessage.objects.filter(user_id=user_id, chatroom_id=chatroom_id).order_by("sent_at")
             
             if not messages.exists():
                 return Response({
@@ -124,7 +124,7 @@ class ChatMsgListView(APIView):
         새로운 채팅 메시지를 생성하며, 시험 계획 요청을 처리 
         """
         # request params에서 chat_id 추출. 기본 값은 1
-        chat_id = request.GET.get("chat_id", 1)
+        chatroom_id = request.GET.get("chatroom_id", 1)
         
         try:
             # 클라이언트로부터 필요한 데이터 추출 
@@ -135,84 +135,114 @@ class ChatMsgListView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # 최신 대화 10개 가져오기
-            past_messages = ChatMessage.objects.filter(user_id=user_id, chat_id=chat_id).order_by("-sent_at")[:10]
+            past_messages = ChatMessage.objects.filter(user_id=user_id, chatroom_id=chatroom_id).order_by("-sent_at")[:10]
             
             # 1-1. 과거 대화 내역을 JSON 형태로 정리 (최신 -> 예전 순으로 정렬)
             chat_history = []
             for msg in reversed(past_messages):  # 최신순으로 가져왔으니 순서 뒤집기 
                 if msg.sent_by == "user":
                     chat_history.append(
+                        # ("human", msg.message_content)
                         HumanMessage(content=msg.message_content)
                     )
                 else:
                     if isinstance(msg.message_content, list): # JSON인 경우 OPENAI 입력에 맞게 직렬화 
                         chat_history.append(
+                            # ("ai", str(msg.message_content))
                             AIMessage(content=str(msg.message_content))
                         )
                     else:
                         chat_history.append(
+                            # ("ai", msg.message_content)
                             AIMessage(content=msg.message_content)
                         )
             
             # 챗봇에게 과거 대화 내역과 새로운 메시지 보내기 
             chatbot_input = {"chat_history": chat_history, "user_msg": user_msg}
-            ai_response = chatbot(chatbot_input)
+
+            # 테스트용으로 챗봇 출력이 이렇게 된다고 하자.
+            action, ai_response = chatbot(chatbot_input)
             
             # 질문과 응답을 chat_id에 저장하기 위한 ChatRoom instance 가져오기 
-            chat_room = ChatRoom.objects.filter(user_id=user_id, chat_id=chat_id).first()
+            chat_room = ChatRoom.objects.filter(user_id=user_id, chat_id=chatroom_id).first()
+            
+            # user_msg 저장
+            ChatMessage.objects.create(
+                chat_id = chat_room,  # ChatRoom 객체 저장 
+                chatroom_id = chat_room.chat_id,  # ChatRoom의 chat_id를 저장 
+                user_id = request.user,
+                message_content = user_msg,
+                sent_by = 'user', 
+                action = ""
+            )
+            
+            # ai_response 저장 
+            ChatMessage.objects.create(
+                chat_id = chat_room,
+                chatroom_id = chat_room.chat_id,
+                user_id = request.user,
+                message_content = ai_response,
+                sent_by = "ai",
+                action = action
+            )
             
             print(f"ai: {ai_response}")
             print('='*60)
             print(f"chat room: {chat_room.chat_name}")
             
-            # 시험 계획 생성 part
-            if "시험 계획" in ai_response:
-                if chat_room.testplan is None:  # 새 시험 계획 생성 
-                    with transaction.atomic():  # ChatRoom과 TestPlan의 연결 관리 
-                        test_plan = TestPlan.objects.create(
-                            test_name=f"{chat_room.chat_name}",
-                            # test_date=아마 ai_response 안에 있을 것,
-                            # test_place=아마 ai_response 안에 있을 것,
-                            # test_plan=아마 ai_response 안에 있을 것,
-                        )
-                        print(f"test_plan {test_plan} is created!")
-                        chat_room.testplan = test_plan
-                        chat_room.save()
-                        
-                        return Response({
-                            "message": "시험 계획이 생성되었습니다.",
-                            "user_msg": user_msg,
-                            "ai_response": {"content": ai_response}
-                        }, status=status.HTTP_201_CREATED)
+            # # 시험 계획 생성 part
+            # if action == "make_plans":
+            #     if chat_room.testplan is None:  # 새 시험 계획 생성
+
+            #         # 챗봇 출력을 해석하는 파트. 이를 해석한 다음 DB에 등록한다.
+            #         temp = ai_response[ai_response.find("<시작>")+4 : ai_response.find("<끝>")].split("<분할>")  # 데이터 파싱
+            #         test_date, test_place, detail_plan = temp[0], temp[1], list()
+            #         for pp in temp[2].split('|'):
+            #             p = pp.split(',')
+            #             detail_plan.append({"target_date": p[0], "target": p[1]})
+
+            #         # DB 원자성 보장.
+            #         with transaction.atomic():
+            #             test_plan = TestPlan.objects.create(
+            #                 chatroom = chat_room,
+            #                 user_id = request.user,
+            #                 test_name = chat_room.chat_name,
+            #                 test_date = test_date,
+            #                 test_place = test_place,
+            #                 test_plan = detail_plan,
+            #             )
+            #             print(f"test_plan {test_plan} is created!")
+            #             chat_room.testplan = test_plan
+            #             chat_room.save()
+
+            #             return Response({
+            #                 "message": "시험 계획이 생성되었습니다.",
+            #                 "user_msg": user_msg,
+            #                 "ai_response": {
+            #                     "action": action,
+            #                     "content": ai_response
+            #                 }
+            #             }, status=status.HTTP_201_CREATED)
                 
-                else:
-                    return Response({
-                        "message": "이미 존재하는 시험 계획입니다.",
-                        "user_msg": user_msg,
-                        "ai_response": {"content": ai_response}
-                    }, status=status.HTTP_208_ALREADY_REPORTED)
+            #     else:
+            #         return Response({
+            #             "message": "이미 존재하는 시험 계획입니다.",
+            #             "user_msg": user_msg,
+            #             "ai_response": {
+            #                 "action": action,
+            #                 "content": ai_response
+            #             }
+            #         }, status=status.HTTP_208_ALREADY_REPORTED)
             
             
-            # user_msg 저장
-            ChatMessage.objects.create(
-                chat_id = chat_room.first(),
-                user_id = request.user,
-                message_content = user_msg,
-                sent_by = 'user'
-            )
-            
-            # ai_response 저장 
-            ChatMessage.objects.create(
-                chat_id = chat_room.first(),
-                user_id = request.user,
-                message_content = ai_response,
-                sent_by = "ai"
-            )
             
             return Response({
                 "message": "메시지가 성공적으로 생성되었습니다.",
                 "user_msg": user_msg,
-                "ai_response": {"content": ai_response}
+                "ai_response": {
+                    "action": action,
+                    "content": ai_response
+                }
             }, status=status.HTTP_201_CREATED)
         
         except ChatRoom.DoesNotExist:
