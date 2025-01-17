@@ -18,8 +18,10 @@ class TestPlan(models.Model):
     test_name = models.CharField(max_length=50)
     test_date = models.CharField(max_length=50)
     test_place = models.CharField(max_length=200)
+    test_plan = models.JSONField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    on_progress = models.BooleanField(default=1)
     
     def __str__(self):
         return self.test_name
@@ -30,9 +32,7 @@ class TestPlan(models.Model):
 @receiver(pre_save, sender=TestPlan)
 def set_plan_id(sender, instance, **kwargs):
     """
-    chatroom 별로 plan_id가 독립적으로 증가하도록 설정 
+    chatroom 별로 plan_id를 chatroom_id와 동일하게 설정 
     """
     if instance.plan_id is None:  # 새로 생성되는 객체일 때만
-        with transaction.atomic():
-            last_plan = TestPlan.objects.filter(chatroom=instance.chatroom).order_by("-plan_id").select_for_update().first()
-            instance.plan_id = last_plan.plan_id + 1 if last_plan else 1
+        instance.plan_id = instance.chatroom.id

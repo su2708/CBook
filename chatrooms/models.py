@@ -49,6 +49,7 @@ class ChatMessage(models.Model):
     SENDER_CHOICES = [("user", "User"), ("ai", "AI")]  # 발신자를 user 또는 ai로 구분 
     sent_by = models.CharField(max_length=20, choices=SENDER_CHOICES)
     sent_at = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=50)
     
     def __str__(self):
         return f"[{self.sent_at}] {self.sent_by}: {self.message_content}"
