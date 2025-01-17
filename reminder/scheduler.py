@@ -39,26 +39,31 @@ class ReminderScheduler:
                 print(f"Removed existing job: {job_id}")
         except Exception as e:
             print(f"Error removing job: {str(e)}")
-            
+        
         if not reminder_setting.is_active:
             return
-            
+        
         try:
+            # 시작 시간과 종료 시간을 HH:MM 형식으로 변환
+            start_time = f"{reminder_setting.start_hour:02d}:{reminder_setting.start_minute:02d}"
+            end_time = f"{reminder_setting.end_hour:02d}:{reminder_setting.end_minute:02d}"
+        
             # 새로운 작업 스케줄링
             self.scheduler.add_job(
                 self.send_reminder,
                 trigger=CronTrigger(
-                    hour=f"{reminder_setting.start_time}-{reminder_setting.end_time}/{reminder_setting.interval_hours}",
+                    hour=f"{reminder_setting.start_hour}-{reminder_setting.end_hour}/{reminder_setting.interval_hours}",
+                    minute=reminder_setting.start_minute,  # 시작 분에 맞춰서 실행
                     timezone='Asia/Seoul'
                 ),
                 id=job_id,
-                args=[reminder_setting.test_plan.plan_id, reminder_setting.message_style],
+                args=[reminder_setting.test_plan.id, reminder_setting.message_style],
                 replace_existing=True,
                 misfire_grace_time=3600,
                 coalesce=True,
                 max_instances=1
             )
-            print(f"Scheduled new job: {job_id}")
+            print(f"Scheduled new job: {job_id} from {start_time} to {end_time}")
         except Exception as e:
             print(f"Error scheduling job: {str(e)}")
 
