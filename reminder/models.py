@@ -22,13 +22,21 @@ class ReminderSetting(models.Model):
         on_delete=models.CASCADE,
         related_name='reminder_setting'
     )
-    start_time = models.IntegerField(
-        help_text='0-23 사이의 시작 시간',
-        validators=[MinValueValidator(0), MaxValueValidator(23)]
+    start_hour = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(23)],
+        help_text='시작 시간 (0-23)'
     )
-    end_time = models.IntegerField(
-        help_text='0-23 사이의 종료 시간',
-        validators=[MinValueValidator(0), MaxValueValidator(23)]
+    start_minute = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(59)],
+        help_text='시작 분 (0-59)'
+    )
+    end_hour = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(23)],
+        help_text='종료 시간 (0-23)'
+    )
+    end_minute = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(59)],
+        help_text='종료 분 (0-59)'
     )
     interval_hours = models.IntegerField(
         choices=INTERVAL_CHOICES,
