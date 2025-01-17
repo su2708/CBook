@@ -56,6 +56,10 @@ INSTALLED_APPS = [
     "testplans",
     "progress",
     "chatrooms",
+    
+    # 리마인더
+    'django_apscheduler',
+    'reminder',
 ]
 
 MIDDLEWARE = [
@@ -168,3 +172,16 @@ SIMPLE_JWT = {
 # 미디어 파일 설정
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# APScheduler 설정
+APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"
+APSCHEDULER_RUN_NOW_TIMEOUT = 25  # Seconds
+
+# Slack 설정
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+SLACK_BOT_TOKEN = os.getenv('SLACK_BOT_TOKEN')
