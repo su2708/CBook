@@ -101,10 +101,10 @@ class ChatMsgListView(APIView):
         특정 채팅방(chat_id)에 해당하는 모든 메시지를 반환 
         """
         # request params에서 chat_id 추출. 기본 값은 1
-        chat_id = request.GET.get("chat_id", 1)
+        chatroom_id = request.GET.get("chatroom_id", 1)
         
         try:
-            messages = ChatMessage.objects.filter(user_id=user_id, chat_id=chat_id).order_by("sent_at")
+            messages = ChatMessage.objects.filter(user_id=user_id, chatroom_id=chatroom_id).order_by("sent_at")
             
             if not messages.exists():
                 return Response({
@@ -124,7 +124,7 @@ class ChatMsgListView(APIView):
         새로운 채팅 메시지를 생성하며, 시험 계획 요청을 처리 
         """
         # request params에서 chat_id 추출. 기본 값은 1
-        chat_id = request.GET.get("chat_id", 1)
+        chatroom_id = request.GET.get("chatroom_id", 1)
         
         try:
             # 클라이언트로부터 필요한 데이터 추출 
@@ -135,7 +135,7 @@ class ChatMsgListView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # 최신 대화 10개 가져오기
-            past_messages = ChatMessage.objects.filter(user_id=user_id, chat_id=chat_id).order_by("-sent_at")[:10]
+            past_messages = ChatMessage.objects.filter(user_id=user_id, chatroom_id=chatroom_id).order_by("-sent_at")[:10]
             
             # 1-1. 과거 대화 내역을 JSON 형태로 정리 (최신 -> 예전 순으로 정렬)
             chat_history = []
@@ -164,7 +164,7 @@ class ChatMsgListView(APIView):
             action, ai_response = chatbot(chatbot_input)
             
             # 질문과 응답을 chat_id에 저장하기 위한 ChatRoom instance 가져오기 
-            chat_room = ChatRoom.objects.filter(user_id=user_id, chat_id=chat_id).first()
+            chat_room = ChatRoom.objects.filter(user_id=user_id, chat_id=chatroom_id).first()
             
             # user_msg 저장
             ChatMessage.objects.create(
@@ -179,6 +179,7 @@ class ChatMsgListView(APIView):
             # ai_response 저장 
             ChatMessage.objects.create(
                 chat_id = chat_room,
+                chatroom_id = chat_room.chat_id,
                 user_id = request.user,
                 message_content = ai_response,
                 sent_by = "ai",
