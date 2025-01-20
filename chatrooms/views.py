@@ -90,6 +90,39 @@ class ChatListView(APIView):
             return Response({
                 "message": f"채팅방 생성 오류 {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def delete(self, request):
+        """
+        새로운 채팅 방을 생성 
+        """
+        # request params에서 user_id와 chat_id 추출. 기본 값은 1
+        user_id = request.GET.get('user_id', 1)
+        chat_id = request.GET.get('chat_id')
+        
+        if not chat_id:
+            return Response({
+                "message": "'chat_id'는 필수 입력 사항입니다."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # 삭제할 채팅방 검색 
+            chatroom = ChatRoom.objects.filter(user_id=user_id, chat_id=chat_id).first()
+            
+            if not chatroom:
+                return Response({
+                    "message": f"채팅 방 {chat_id}를 찾을 수 없습니다."
+                }, status=status.HTTP_404_NOT_FOUND)
+                
+            # 채팅방 삭제 
+            chatroom.delete()
+            return Response({
+                "message": f"{chat_id}번 채팅 방이 성공적으로 삭제되었습니다."
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                "message": f"채팅 방 삭제 오류: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # 채팅 메시지에 대한 class
