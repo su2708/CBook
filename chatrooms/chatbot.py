@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 import json
 import os
-
+from datetime import datetime as dt
 
 # 환경 변수 로드
 load_dotenv()
@@ -191,6 +191,7 @@ def make_plans(query: str, chat_history):
     
     template = [(
         "system",
+        f"오늘 날짜는 {dt.today()} 입니다.\n" +
         """
         당신은 시험 계획을 세워주는 AI 챗봇입니다.
         과거의 대화 내역에서 사용자의 마지막 질문과 관련된 책의 정보가 있다면 그 책의 목차를 활용해 학습 계획을 만들어주세요.
