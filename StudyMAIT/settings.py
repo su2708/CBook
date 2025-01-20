@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     # Local
     "accounts",
     "testplans",
-    "progress",
+    "archievements",
     "chatrooms",
     
     # 리마인더
