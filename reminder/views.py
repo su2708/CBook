@@ -42,6 +42,7 @@ class ReminderSettingViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """알림 설정 수정"""
+        partial = kwargs.pop('partial', False)  # partial=False는 전체 업데이트
         instance = self.get_object()
         serializer = self.get_serializer(
             instance,
@@ -55,6 +56,12 @@ class ReminderSettingViewSet(viewsets.ModelViewSet):
         scheduler.schedule_reminder(reminder_setting)
 
         return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        """부분 알림 설정 수정 (PATCH)"""
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
 
     @action(detail=True, methods=['post'])
     def toggle_active(self, request, pk=None):
