@@ -1,0 +1,69 @@
+version: "3.9" # Docker-Compose 파일 버전
+
+services: # 각 서비스 정의
+  db:
+    image: mariadb:10.5 # MariaDB 공식 이미지
+    container_name: mariadb
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  backend: # Django Backend
+    build: # Dockerfile 경로
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: django_backend
+    ports: # 포트 매핑 (호스트:컨테이너)
+      - "8000:8000"
+    volumes: # 볼륨 마운트
+      - ./backend:/app
+      - media_data:/app/media # 미디어 파일을 위한 볼륨
+    depends_on: # 의존 서비스
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python manage.py check || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 40s
+    environment: # 환경 변수
+      - DEBUG=True
+      - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME}
+      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL}
+      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+    env_file:
+      - .env
+
+  frontend: # Next.js Frontend
+    build:
+      context: ./frontend # frontend 디렉토리 경로
+      dockerfile: Dockerfile # frontend 디렉토리 내 Dockerfile
+    container_name: nextjs_frontend
+    ports:
+      - "3000:3000" # React/Vue의 기본 포트
+    volumes:
+      - ./frontend:/app # 로컬 코드 동기화
+      - /app/node_modules # node_modules 제외 (로컬 캐싱)
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    command: npm run dev
+
+volumes: # 볼륨 정의
+  mariadb_data:
+  media_data:
