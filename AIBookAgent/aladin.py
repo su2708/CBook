@@ -19,7 +19,6 @@ def get_isbn13(query, k):
     - SearchTarget: 검색 대상 
     - start: 검색 결과 시작 페이지 
     - MaxResults: 검색 결과 한 페이지 당 최대 출력 개수 
-    - CategoryId: 특정 분야로 검색 결과 제한 
     - output: 출력 방법 
 
     2. Response

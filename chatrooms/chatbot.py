@@ -170,7 +170,7 @@ def search_books(query: str, k: int = 5):
         return books
     else:
         books = search_aladin(query, k)
-        print(f"\n✨ 검색 완료! {len(books)}개의 결과를 찾았습니다.\n")
+        print(f"\n✨ 알라딘 검색 완료! {len(books)}개의 결과를 찾았습니다.\n")
         
         return books
 

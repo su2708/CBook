@@ -58,8 +58,8 @@ INSTALLED_APPS = [
     "chatrooms",
     
     # 리마인더
-    'django_apscheduler',
-    'reminder',
+    "django_apscheduler",
+    "reminder",
 ]
 
 MIDDLEWARE = [
