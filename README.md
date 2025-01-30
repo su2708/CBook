@@ -229,7 +229,7 @@
   </details>
 
   <details>
-    <summary >프론트엔드드 트러블 슈팅</summary>
+    <summary >프론트엔드 트러블 슈팅</summary>
     <div markdown="1"></div>
 
   ### 다크 모드 도입
