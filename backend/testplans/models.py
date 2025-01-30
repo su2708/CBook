@@ -1,8 +1,7 @@
-from django.db import models, transaction
+from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.conf import settings
-from chatrooms.models import ChatRoom
 
 class TestPlan(models.Model):
     id = models.AutoField(primary_key=True)
@@ -12,6 +11,7 @@ class TestPlan(models.Model):
         on_delete=models.CASCADE,
         related_name="linked_testplan"
     )
+    ctrm_id = models.IntegerField(null=True, blank=True)  # ChatRoom의 chat_id
     user_id = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="testplans"
     )

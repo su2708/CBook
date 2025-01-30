@@ -5,7 +5,9 @@ FROM python:3.11.11-slim
 WORKDIR /app
 
 # 필수 패키지 설치 (MariaDB/MySQL 클라이언트 설치 시 필요한 의존성 추가)
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+    mariadb-client \
     curl \
     build-essential \
     python3-dev \
@@ -18,6 +20,7 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
+RUN ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && echo "Asia/Seoul" > /etc/timezone
 
 # 프로젝트 파일 복사
 COPY . .
@@ -26,4 +29,5 @@ COPY . .
 ENV PYTHONUNBUFFERED=1
 
 # Django 서버 실행
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "StudyMAIT.wsgi:application"]

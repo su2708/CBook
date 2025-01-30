@@ -1,6 +1,6 @@
 import React from 'react'
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { Button } from "./ui/button"
 import Link from 'next/link'
 
 interface MessageProps {
@@ -26,7 +26,9 @@ export function Message({ isUser, plan, content, userName, children }: MessagePr
           <div>
             <p>시험 날짜: {test_day.substring(0, 4)}-{test_day.substring(4, 6)}-{test_day.substring(6, 8)}</p>
             <p>책 제목: {book_title}</p>
-            <p>학습 계획이 생성되었습니다. 아래 버튼을 클릭하여 자세히 볼 수 있습니다.</p>
+            <p><br />학습 계획이 생성되었습니다.</p>
+            <p>시험 날짜와 책 제목이 정상적으로 출력되어 있는지 확인하세요.</p>
+            <p>두 개의 데이터가 모두 채워져 있어야 시험 계획을 볼 수 있습니다.</p>
           </div>
         );
       } catch (error) {
@@ -41,11 +43,11 @@ export function Message({ isUser, plan, content, userName, children }: MessagePr
     <div className={`w-full p-4 ${isUser ? 'bg-background' : 'bg-primary'}`}>
       <div className="container max-w-4xl mx-auto">
         <div className="flex items-start gap-3">
-          <Avatar>
+          <Avatar className='bg-secondary'>
             {isUser ? (
               <AvatarImage src="/placeholder.svg" alt="User" />
             ) : (
-              <AvatarImage src="/placeholder.svg" alt="AI" />
+              <AvatarImage src="/StudyMAIT_Logo.png" alt="AI" className="object-contain p-2"/>
             )}
             <AvatarFallback>{isUser ? '나' : 'AI'}</AvatarFallback>
           </Avatar>

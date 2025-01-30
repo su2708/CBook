@@ -3,7 +3,6 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.conf import settings
 
-# Create your models here.
 class ChatRoom(models.Model):
     chat_id = models.IntegerField(null=True, blank=True, default=None)
     user_id = models.ForeignKey(
@@ -42,6 +41,7 @@ class ChatMessage(models.Model):
     chat_id = models.ForeignKey(
         ChatRoom, on_delete=models.CASCADE, related_name="chatmessages"
     )
+    chatroom_id = models.IntegerField(null=True, blank=True)  # ChatRoom의 chat_id
     user_id = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chatmessages"
     )

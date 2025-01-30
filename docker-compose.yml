@@ -1,24 +1,36 @@
-version: "3.9" # Docker-Compose 파일 버전
-
 services: # 각 서비스 정의
   db:
-    image: mariadb:10.5 # MariaDB 공식 이미지
+    image: mariadb:10.6 # MariaDB 공식 이미지
     container_name: mariadb
-    ports:
+    ports: # 포트 매핑 (호스트:컨테이너)
       - "3307:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p$MYSQL_ROOT_PASSWORD",
+        ]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 10s
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - TZ=Asia/Seoul
     volumes:
       - mariadb_data:/var/lib/mysql
+      - ./mariadb/conf.d:/etc/mysql/conf.d
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
 
   backend: # Django Backend
     build: # Dockerfile 경로
@@ -28,8 +40,17 @@ services: # 각 서비스 정의
     ports: # 포트 매핑 (호스트:컨테이너)
       - "8000:8000"
     volumes: # 볼륨 마운트
-      - ./backend:/app
+      - ./backend/staticfiles:/app/staticfiles
       - media_data:/app/media # 미디어 파일을 위한 볼륨
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    networks:
+      - default
+    command: >
+      sh -c "python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        python manage.py loaddata message_templates &&
+        gunicorn --bind 0.0.0.0:8000 StudyMAIT.wsgi:application"
     depends_on: # 의존 서비스
       db:
         condition: service_healthy
@@ -44,8 +65,29 @@ services: # 각 서비스 정의
       - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME}
       - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL}
       - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+      - TZ=Asia/Seoul    
     env_file:
       - .env
+  
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: django_scheduler
+    command: python manage.py start_scheduler
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
+    environment:
+      - DJANGO_SETTINGS_MODULE=StudyMAIT.settings
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - DEBUG=True
+      - LANG=ko_KR.UTF-8
+      - LC_ALL=ko_KR.UTF-8
+      - TZ=Asia/Seoul
 
   frontend: # Next.js Frontend
     build:
@@ -57,13 +99,39 @@ services: # 각 서비스 정의
     volumes:
       - ./frontend:/app # 로컬 코드 동기화
       - /app/node_modules # node_modules 제외 (로컬 캐싱)
+      - nextjs_build:/app/.next
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     depends_on:
       backend:
         condition: service_healthy
+    command: >
+      sh -c "npm run start"
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-    command: npm run dev
+      - TZ=Asia/Seoul
+    env_file:
+      - .env
+      
+  nginx:
+    build:
+      context: ./frontend
+      dockerfile: nginx.Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      # Next.js static 파일들을 nginx 컨테이너에 마운트
+      - nextjs_build:/usr/share/nginx/html/_next
+      - ./frontend/public:/usr/share/nginx/html/static
+    depends_on:
+      - frontend
+
 
 volumes: # 볼륨 정의
   mariadb_data:
   media_data:
+  nextjs_build:
+
+networks:
+  default:
+    name: cbook_default

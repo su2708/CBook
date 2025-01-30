@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from .models import ReminderSetting, MessageTemplate
 from .serializers import ReminderSettingSerializer, MessageTemplateSerializer
-from .scheduler import scheduler
+from .scheduler import schedule_reminder
 from testplans.models import TestPlan
 
 class ReminderSettingViewSet(viewsets.ModelViewSet):
@@ -33,7 +33,15 @@ class ReminderSettingViewSet(viewsets.ModelViewSet):
         reminder_setting = serializer.save()
         
         # 스케줄러에 작업 등록
-        scheduler.schedule_reminder(reminder_setting)
+        schedule_reminder(
+            reminder_setting.reminder_id,
+            reminder_setting.test_plan.id,
+            reminder_setting.start_hour,
+            reminder_setting.start_minute,
+            reminder_setting.end_hour,
+            reminder_setting.interval_hours,
+            reminder_setting.message_style
+        )
 
         return Response(
             serializer.data,
@@ -42,20 +50,17 @@ class ReminderSettingViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """알림 설정 수정"""
-        partial = kwargs.pop('partial', False)  # partial=False는 전체 업데이트
-        instance = self.get_object()
-        serializer = self.get_serializer(
-            instance,
-            data=request.data,
-            partial=True
+        reminder_setting = self.get_object()
+        schedule_reminder(
+            reminder_setting.reminder_id,
+            reminder_setting.test_plan.id,
+            reminder_setting.start_hour,
+            reminder_setting.start_minute,
+            reminder_setting.end_hour,
+            reminder_setting.interval_hours,
+            reminder_setting.message_style
         )
-        serializer.is_valid(raise_exception=True)
-        reminder_setting = serializer.save()
-        
-        # 스케줄러 작업 갱신
-        scheduler.schedule_reminder(reminder_setting)
-
-        return Response(serializer.data)
+        return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
         """부분 알림 설정 수정 (PATCH)"""
@@ -71,7 +76,15 @@ class ReminderSettingViewSet(viewsets.ModelViewSet):
         reminder_setting.save()
         
         # 스케줄러 작업 갱신
-        scheduler.schedule_reminder(reminder_setting)
+        schedule_reminder(
+            reminder_setting.reminder_id,
+            reminder_setting.test_plan.id,
+            reminder_setting.start_hour,
+            reminder_setting.start_minute,
+            reminder_setting.end_hour,
+            reminder_setting.interval_hours,
+            reminder_setting.message_style
+        )
 
         return Response({
             'status': 'success',
