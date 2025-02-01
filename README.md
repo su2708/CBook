@@ -1,29 +1,25 @@
 # 스터디메이트(StudyMAIT) 프로젝트
 
 ![ex_screenshot](./img/main.png)
+<summary style="font-weight:bold;">
+  StudyMAIT는 수험생이 AI 챗봇과의 대화로 원하는 수험서를 선택하고, 선택한 수험서의 목차를 바탕으로 자동 학습 계획을 세워주는 서비스를 제공합니다.
+</summary>
+<br>
 
+<summary style="font-weight:bold;">개발기간 : '24.12.30 ~ 25.1.30'</summary>
 <br>
 
 ## ****📌 프로젝트 개요****
+#### 프로젝트 주제
+- AI 챗봇을 통한 개인화된 학습 계획 수립과 진도 관리, 동기 부여 기능을 제공하는 학습 관리 서비스
+<br/>
 
-<details>
-<summary style="font-weight:bold;">기획 의도</summary>
-<div markdown="1"></div>
-
+#### 기획 의도
 - 많은 사람들이 시험 준비 과정에서 학습 계획을 세우는 데 어려움을 겪으며, 효율적인 학습을 방해받거나 동기 부여가 저하되는 문제가 있습니다.
 - 본 서비스는 AI 챗봇을 활용하여 사용자의 시험 정보를 기반으로 최적화된 학습 계획을 추천하고, 맞춤형 학습 경험을 제공합니다.
 - 챗봇과의 대화를 통해 사용자는 응시할 시험과 연관된 도서를 추천받고, 해당 도서의 목차를 바탕으로 체계적인 학습 계획을 수립할 수 있습니다.
 - 학습 계획의 진행을 돕기 위해 맞춤형 리마인더 기능을 제공하여, 사용자가 설정한 일정에 따라 지속적인 동기 부여를 받을 수 있도록 지원합니다.
 - 대시보드 기능을 통해 다수의 시험 계획을 관리할 수 있으며, 각 시험별 맞춤형 리마인더 설정이 가능합니다.
-</details>
-  
-<details>
-  <summary style="font-weight:bold;">개발기간 : '24.12.30 ~ 25.1.30'</summary>
-</details>
-
-
-
-<br>
 
 
 ## 🥘 ****서비스 시연 영상****
@@ -44,37 +40,21 @@
 <br>
 
 ## 🔨 ****개발 포지션 구성****
-  
-  <details>
-    <summary >🛠 윤수용(팀장)</summary>
-    <div markdown="1"></div>
-  
-  - 프로젝트 총괄
-  - 백엔드 총괄 및 AI 담당
-  - 인프라 구축, AWS 배포
 
-  </details>
-  
-  <details>
-    <summary >🛠 윤민석</summary>
-    <div markdown="2"></div>
-  
-  - 대시보드 기능
-  - 프론트엔드 총괄
-  - 디자인 총괄
+| 이름   | 역할  | 담당 업무    |
+| :------: | :-----: | -------- |
+| 윤수용    | 팀장    | 프로젝트 총괄, 백엔드 총괄 및 AI 담당, 인프라 구축, AWS 배포 |
+| 유민석    | 팀원    | 프론트엔드 총괄, 디자인 총괄, 대시보드 기능 |
+| 이지훈    | 팀원    | 리마인더 기능, 유저테스트, 문서 관리 |
 
-  </details>
-  
-  <details>
-  <summary >🛠 이지훈</summary>
-  <div markdown="3"></div>
-  
-  - 리마인더 기능
-  - 유저테스트
-  - 문서 관리
+- 협업 도구
+  - github
+  - Slack
+  - Notion
+  - Figma
 
-  </details>
-
+- 버전 관리
+  - git
 <br>
 
 ## ****⛓ Tech Stack****  
@@ -398,6 +378,51 @@
     - 위의 해결 방안대로 IsOwner class를 만들어 Permission 검증하는 방식으로 진행
 
   </details>
+
+## 🔍 ****Directory Structure****
+```
+.
+|-- README.md                   # 프로젝트 설명 및 실행 가이드 
+|-- backend                     # 서버 측 코드
+|   |-- AIBookAgent             # 도서 수집 및 임베딩 관련 모듈
+|   |-- StudyMAIT               # 프로젝트 Setting 관련 모듈
+|   |-- accounts                # 사용자 계정 관련 모듈
+|   |-- archievements           # 사용자 업적 관련 모듈
+|   |-- chatrooms               # 사용자 채팅 관련 모듈 
+|   |-- Dockerfile              # 백엔드 Docker 설정 파일 
+|   |-- manage.py               # Django 관리 스크립트
+|   |-- nginx.Dockerfile        # 
+|   |-- nginx.conf              #
+|   |-- reminder                # 시험 계획 알림 관련 모듈
+|   |-- requirements.txt        # Python 패키지 의존성 목록
+|   `-- testplans               # 시험 계획 관련 모듈 
+|-- docker-compose.yml          # Docker Compose 구성 파일 
+|-- frontend                    # 클라이언트 측 코드
+|   |-- Dockerfile              # 프론트엔드 Docker 설정 파일 
+|   |-- README.md               # 프론트엔드 설명 및 가이드 
+|   |-- components.json         # 
+|   |-- eslint.config.mjs       # 
+|   |-- next-env.d.ts           # 
+|   |-- next.config.ts          # 
+|   |-- node_modules            # 
+|   |-- package-lock.json       # 
+|   |-- package.json            # 
+|   |-- postcss.config.mjs      # 
+|   |-- public                  # 
+|   |-- src                     # 
+|   |   |-- app                 # 
+|   |   |-- components          # 
+|   |   |-- contexts            # 
+|   |   |-- hooks               # 
+|   |   `-- utils               # 
+|   |-- tailwind.config.ts      # 
+|   |-- tsconfig.json           # 
+|   `-- yarn.lock               # yarn 패키지 버전 고정 파일 
+|-- img                         # 이미지 파일 모음 
+|-- mariadb                     # 데이터 베이스 관련 파일 
+|-- node_modules                #
+`-- yarn.lock                   # yarn 패키지 버전 고정 파일 
+```
 
 ## 🧱 ****Project Architecture****
 
