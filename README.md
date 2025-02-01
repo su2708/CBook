@@ -379,6 +379,8 @@
 
   </details>
 
+<br/>
+
 ## 🔍 ****Directory Structure****
 ```
 .
@@ -423,6 +425,8 @@
 |-- node_modules                #
 `-- yarn.lock                   # yarn 패키지 버전 고정 파일 
 ```
+
+<br/>
 
 ## 🧱 ****Project Architecture****
 
