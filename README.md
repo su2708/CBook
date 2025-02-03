@@ -392,8 +392,8 @@
 |   |-- chatrooms               # 사용자 채팅 관련 모듈 
 |   |-- Dockerfile              # 백엔드 Docker 설정 파일 
 |   |-- manage.py               # Django 관리 스크립트
-|   |-- nginx.Dockerfile        # 
-|   |-- nginx.conf              #
+|   |-- nginx.Dockerfile        # nginx Docker 설정 파일
+|   |-- nginx.conf              # 웹서버 기본 설정 파
 |   |-- reminder                # 시험 계획 알림 관련 모듈
 |   |-- requirements.txt        # Python 패키지 의존성 목록
 |   `-- testplans               # 시험 계획 관련 모듈 
@@ -422,7 +422,7 @@
 |   |   |   |-- favicon.ico     # 크롬 탭 등에 뜨는 앱 아이콘
 |   |   |   |-- globals.css     # 전체 페에지 스타일 정의
 |   |   |   |-- layout.tsx      # 전체 페이지 레이아웃 정의 (ThemeProvider, AuthProvider 적용)
-|   |   |   |-- page.tsx        # 
+|   |   |   `-- page.tsx        # 
 |   |   |-- components          # 각 페이지마다 공통으로 사용되는 UI 컴포넌트 관리
 |   |   |-- contexts            # 로그인 이후 토큰 관리
 |   |   |-- hooks               # Django 백엔드 연결 및 API 호출
