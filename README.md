@@ -439,7 +439,11 @@
 
 ## 🧱 ****Project Architecture****
 
-![ex_screenshot](./img/project.png)
+#### System Architecture
+![system architecture](./img/system_architecture.png)
+
+#### System Process
+![system process](./img/system_process.png)
 
 <br>
 
