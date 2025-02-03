@@ -401,28 +401,38 @@
 |-- frontend                    # 클라이언트 측 코드
 |   |-- Dockerfile              # 프론트엔드 Docker 설정 파일 
 |   |-- README.md               # 프론트엔드 설명 및 가이드 
-|   |-- components.json         # 
-|   |-- eslint.config.mjs       # 
-|   |-- next-env.d.ts           # 
-|   |-- next.config.ts          # 
-|   |-- node_modules            # 
-|   |-- package-lock.json       # 
-|   |-- package.json            # 
-|   |-- postcss.config.mjs      # 
-|   |-- public                  # 
+|   |-- components.json         # shadcn/ui configuration 파일
+|   |-- eslint.config.mjs       # 타입스크립트 문법 오류 시 표시해주는 도구
+|   |-- next-env.d.ts           # 타입스크립트 컴파일러가 Next.js의 타입을 가져오게 함
+|   |-- next.config.ts          # next.js configuration 파일
+|   |-- node_modules            # 설치된 패키지들이 있는 디렉토리
+|   |-- package-lock.json       # 의존성 트리에 대한 정보를 가진 파일
+|   |-- package.json            # 의존성 목록이 있는 파일
+|   |-- postcss.config.mjs      # postcss configuration 파일
+|   |-- public                  # 폰트, 이미지 등 리소스 폴더
 |   |-- src                     # 
-|   |   |-- app                 # 
-|   |   |-- components          # 
-|   |   |-- contexts            # 
-|   |   |-- hooks               # 
-|   |   `-- utils               # 
-|   |-- tailwind.config.ts      # 
-|   |-- tsconfig.json           # 
+|   |   |-- app                 # 라우팅으로 아래 페이지들을 정의
+|   |   |   |-- chat            # 채팅 페이지
+|   |   |   |-- dashboard       # 대시보드 페이지
+|   |   |   |-- landing         # 서비스 랜딩 페이지
+|   |   |   |-- login           # 로그인 페이지
+|   |   |   |-- plan-preview    # 시험 계획 미리보기 페이지
+|   |   |   |-- profile         # 프로필 페이지
+|   |   |   |-- register        # 회원가입 페이지
+|   |   |   |-- favicon.ico     # 크롬 탭 등에 뜨는 앱 아이콘
+|   |   |   |-- globals.css     # 전체 페에지 스타일 정의
+|   |   |   |-- layout.tsx      # 전체 페이지 레이아웃 정의 (ThemeProvider, AuthProvider 적용)
+|   |   |   |-- page.tsx        # 
+|   |   |-- components          # 각 페이지마다 공통으로 사용되는 UI 컴포넌트 관리
+|   |   |-- contexts            # 로그인 이후 토큰 관리
+|   |   |-- hooks               # Django 백엔드 연결 및 API 호출
+|   |   `-- utils               # 날짜 데이터 관련 처리 함수 선언
+|   |-- tailwind.config.ts      # tailwindcss configuration 파일
+|   |-- tsconfig.json           # typescript configuration 파일
 |   `-- yarn.lock               # yarn 패키지 버전 고정 파일 
 |-- img                         # 이미지 파일 모음 
-|-- mariadb                     # 데이터 베이스 관련 파일 
-|-- node_modules                #
-`-- yarn.lock                   # yarn 패키지 버전 고정 파일 
+`-- mariadb                     # 데이터 베이스 관련 파일 
+
 ```
 
 <br/>
